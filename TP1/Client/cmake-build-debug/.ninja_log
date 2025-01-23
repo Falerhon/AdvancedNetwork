@@ -1,0 +1,11 @@
+# ninja log v6
+1	246	7593757650360086	build.ninja	d791245cf59a67ff
+37	90	7593740158915006	Libraries/Socket/CMakeFiles/Socket.dir/Socket_posix.cpp.obj	d32f0eae37b509c6
+16	569	7593750542741979	CMakeFiles/Client.dir/main.cpp.obj	e5e75079db49cc81
+40	93	7593740158949240	Libraries/Socket/CMakeFiles/Socket.dir/Socket_common.cpp.obj	6132e0342fc83c0
+31	572	7593740158859775	Libraries/Socket/CMakeFiles/Socket.dir/library.cpp.obj	adba5ba4e87427c9
+11	1378	7593751012024361	Libraries/Socket/CMakeFiles/Socket.dir/Socket_windows.cpp.obj	a08297cdd14ec25c
+1378	1435	7593751025693844	Libraries/Socket/libSocket.a	e74793cd7e19dbd5
+1495	1571	7593740611199367	Client.exe	638da829b6fe47ab
+2	251	7593757650360086	build.ninja	d791245cf59a67ff
+21	127	7593757651149990	Client.exe	31a8ae3b0517d030

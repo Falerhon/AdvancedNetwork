@@ -1,0 +1,6 @@
+# ninja log v6
+14	69	7593654410703314	CMakeFiles/Socket.dir/Socket_common.cpp.obj	687ad70422e81962
+10	70	7593654410667519	CMakeFiles/Socket.dir/Socket_posix.cpp.obj	40a3cf2e1dd8918c
+1	535	7593654410571173	CMakeFiles/Socket.dir/library.cpp.obj	60efa1e8786ae85e
+6	1234	7593654410624230	CMakeFiles/Socket.dir/Socket_windows.cpp.obj	fd591e15c9a5d70a
+1235	1311	7593654422922065	libSocket.a	aacdc4074159c808

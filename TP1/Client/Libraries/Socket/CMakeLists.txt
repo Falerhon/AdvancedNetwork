@@ -8,3 +8,5 @@ add_library(Socket STATIC library.cpp
         Socket_windows.cpp
         Socket_posix.cpp
         Socket_common.cpp)
+
+target_link_libraries(Socket ws2_32)
