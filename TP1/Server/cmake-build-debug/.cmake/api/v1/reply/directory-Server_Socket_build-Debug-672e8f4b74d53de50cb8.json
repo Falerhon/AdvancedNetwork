@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "Server_Socket_build",
+		"source" : "C:/Users/Lea/Desktop/Network/TP1/Socket"
+	}
+}

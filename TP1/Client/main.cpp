@@ -11,11 +11,13 @@ std::string TypeMessage() {
 }
 
 int main() {
-    Socket* socket = new Socket();
+    Socket* socket = Socket::CreateSocket();
+
     socket->CreateClientSocket("127.0.0.1");
-
-    socket->MessageSend(*TypeMessage().c_str());
-    socket->MessageRecieve();
-
+    std::string msg = "Hello World!";
+    socket->MessageSend(msg);
+    char buffer[1024];
+    socket->MessageReceived(buffer, sizeof(buffer));
+    socket->CloseSocket();
     return 0;
 }
