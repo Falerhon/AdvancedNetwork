@@ -1,10 +1,10 @@
 ﻿//
 // Implementation for Windows
 //
-#include <ws2tcpip.h>
 #ifdef WIN32
 #include "Socket.h"
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <ws2ipdef.h>
 #pragma comment (lib, "Ws2_32.lib")
 class Socket_windows : public Socket {
