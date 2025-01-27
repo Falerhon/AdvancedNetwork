@@ -8,7 +8,12 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
+#include <cstring> //for memset
+#include <cerrno> //for errno and strerror
+#include <cstdio> //for printf(
+)
 #define SOCKET int
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
@@ -65,9 +70,9 @@ int CreateServerSocket() override {
     //Bind the socket
     sockaddr_in6  serverAddress;
     memset(&serverAddress, 0, sizeof(serverAddress));
-    serverAddress.sin_family = AF_INET6;
-    serverAddress.sin6_addr.s_addr = in6addr_any;
-    serverAddress.sin_port = htons(5555);
+    serverAddress.sin6_family = AF_INET6;
+    serverAddress.sin6_addr = in6addr_any;
+    serverAddress.sin6_port = htons(5555);
 
     if(bind(Socket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR){
       printf("Failed to bind\n");
