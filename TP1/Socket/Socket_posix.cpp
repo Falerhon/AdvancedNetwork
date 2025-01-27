@@ -20,7 +20,9 @@
 
 class Socket_posix : public Socket {
   private:
-SOCKET Socket;
+  SOCKET Socket;
+  struct sockaddr_in6 serverAddr;
+  socklen_t serverAddrLen;
 public:
 int initialize() override {
       //Posix doesnt need initialisation
@@ -82,7 +84,7 @@ int CreateServerSocket() override {
 
   char buffer[1024];
   sockaddr_in6 clientAddress;
-  int clientAddrSize = sizeof(clientAddress);
+  socklen_t clientAddrSize = sizeof(clientAddress);
 
   // Receive data from the client
   int bytesRead = recvfrom(Socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &clientAddress, &clientAddrSize);
