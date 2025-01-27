@@ -8,6 +8,13 @@
 #define DEFAULT_PORT "5555"
 #define DEFAULT_BUFLEN 512
 
+// Forward declare platform-specific classes
+#ifdef WIN32
+class Socket_windows;  // Forward declaration of Windows-specific class
+#else
+class Socket_posix;    // Forward declaration of POSIX-specific class
+#endif
+
 class Socket {
 public:
     static Socket* CreateSocket();

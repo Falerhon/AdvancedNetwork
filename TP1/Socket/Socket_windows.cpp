@@ -7,6 +7,7 @@
 #include <ws2tcpip.h>
 #include <ws2ipdef.h>
 #pragma comment (lib, "Ws2_32.lib")
+
 class Socket_windows : public Socket {
 private:
     SOCKET Socket;
@@ -18,10 +19,10 @@ public:
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             printf("Failed to initialize Winsock %d\n", WSAGetLastError());
-            return 0;
+            return 1;
         }
 
-        return 1;
+        return 0;
     }
 
     int CreateClientSocket(const std::string &HostAddress) override {
@@ -35,7 +36,7 @@ public:
         if (status != 0) {
             printf("getaddrinfo error: %s\n", gai_strerror(status));
             freeaddrinfo(res);
-            return 0;
+            return 1;
         }
 
         Socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -43,7 +44,7 @@ public:
             printf("Failed to create client socket. %d\n", WSAGetLastError());
             WSACleanup();
             freeaddrinfo(res);
-            return 0;
+            return 1;
         }
 
         printf("Successfully created client socket. Ready to send to %s\n", HostAddress.c_str());
@@ -53,14 +54,14 @@ public:
         serverAddrLen = res->ai_addrlen;
 
         freeaddrinfo(res); // Free the address info struct
-        return 1;
+        return 0;
     }
 
     int CreateServerSocket() override {
         Socket = socket(AF_INET6, SOCK_DGRAM, 0);
         if (Socket == INVALID_SOCKET) {
             printf("Failed to create server socket\n");
-            return 0;
+            return 1;
         }
 
         //Set up the support for both IPv4 and IPv6
@@ -69,7 +70,7 @@ public:
             printf("Failed to set IPV6_V6ONLY option.\n");
             closesocket(Socket);
             WSACleanup();
-            return 0;
+            return 1;
         }
 
 
@@ -84,7 +85,7 @@ public:
             printf("Failed to bind : %d\n", WSAGetLastError());
             closesocket(Socket);
             WSACleanup();
-            return 0;
+            return 1;
         }
 
         char buffer[1024];
@@ -105,12 +106,12 @@ public:
                 printf("Failed to send data to the client %d\n", WSAGetLastError());
                 closesocket(Socket);
                 WSACleanup();
-                return 0;
+                return 1;
             }
 
             printf("Sent data back to client: %s\n", buffer);
         }
-        return 1;
+        return 0;
     }
 
     int MessageSend(const std::string &Message) override {
@@ -118,10 +119,10 @@ public:
 
         if (bytesSent == SOCKET_ERROR) {
             printf("Failed to send message. Error: %d\n", WSAGetLastError());
-            return 0;
+            return 1;
         }
         printf("Message sent: %s\n", Message.c_str());
-        return 1;
+        return 0;
     }
 
     int MessageReceived(char *buffer, int bufferSize) override {
@@ -131,19 +132,19 @@ public:
         int bytesReceived = recvfrom(Socket, buffer, bufferSize, 0, (struct sockaddr*)&recvAddr, &recvAddrLen);
         if (bytesReceived == SOCKET_ERROR) {
             printf("Failed to receive message. Error: %d\n", WSAGetLastError());
-            return 0;
+            return 1;
         }
 
         buffer[bytesReceived] = '\0'; // Null-terminate the received data
         printf("Received message: %s\n", buffer);
-        return 1;
+        return 0;
     }
 
     int CloseSocket() override {
         // cleanup
         closesocket(Socket);
         WSACleanup();
-        return 1;
+        return 0;
     }
 };
 #endif

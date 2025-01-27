@@ -1,5 +1,6 @@
 ﻿// Common implementation of all platforms
 #include "Socket.h"
+
 #ifdef WIN32
     #include "Socket_windows.cpp"  // Include Windows-specific implementation
 #else
