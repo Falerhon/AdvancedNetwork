@@ -134,5 +134,4 @@ int MessageReceived(char *buffer, int bufferSize) override {
 }
 };
 #endif
-// Explicitly define the POSIX-specific socket object
-Socket_posix *socket_posix = nullptr;
+

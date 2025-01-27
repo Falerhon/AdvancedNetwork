@@ -8,9 +8,11 @@
 #define DEFAULT_PORT "5555"
 #define DEFAULT_BUFLEN 512
 
-
+#ifdef WIN32
 class Socket_windows;  // Forward declaration of Socket_windows
+#else
 class Socket_posix;    // Forward declaration of Socket_posix
+#endif
 
 class Socket {
 public:
