@@ -12,8 +12,8 @@
 
 #include <cstring> //for memset
 #include <cerrno> //for errno and strerror
-#include <cstdio> //for printf(
-)
+#include <cstdio> //for printf
+
 #define SOCKET int
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
