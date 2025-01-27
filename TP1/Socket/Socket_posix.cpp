@@ -50,6 +50,11 @@ int CreateClientSocket(const std::string &HostAddress) override {
       }
 
       printf("Successfully created client socket. Ready to send to %s\n", HostAddress.c_str());
+
+      // Store the server address and length
+      memcpy(&serverAddr, res->ai_addr, res->ai_addrlen);
+      serverAddrLen = res->ai_addrlen;
+
       freeaddrinfo(res);
       return 0;
 }
