@@ -2,8 +2,10 @@
 #include <Socket.h>
 
 std::string TypeMessage() {
-    std::string message;
 
+    std::cout << "Message to send : ";
+
+    std::string message;
     std::getline(std::cin, message);
 
     return message;
@@ -16,7 +18,7 @@ int main() {
     std::string IPAddress;
     std::string AddressType;
 
-    std::cout << "Type of destination address : IPV4 (4) or IPV6 (6)";
+    std::cout << "Type of destination address : IPV4 (4) or IPV6 (6)" << std::endl;
 
     while (true) {
         std::cin >> AddressType;
@@ -30,7 +32,7 @@ int main() {
             break;
         } else {
             std::cin.clear();
-            std::cout << "Input invalid. Valid inputs : 4 - 6";
+            std::cout << "Input invalid. Valid inputs : 4 - 6" << std::endl;
         }
     }
 

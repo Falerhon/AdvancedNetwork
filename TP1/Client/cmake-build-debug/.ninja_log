@@ -28,3 +28,8 @@
 25	1524	7598060560739196	Client_Socket_build/CMakeFiles/Socket.dir/Socket_common.cpp.obj	c2e3d66ca3aa7a26
 1524	1581	7598060575730114	Client_Socket_build/libSocket.a	684cf3bb126d555c
 1581	1666	7598060576298998	Client.exe	972e4c9cdf36a573
+25	543	7598063400931474	CMakeFiles/Client.dir/main.cpp.obj	7fbf857474c210db
+18	1510	7598063400860562	Client_Socket_build/CMakeFiles/Socket.dir/Socket_windows.cpp.obj	cea764574f1a9f3e
+22	1522	7598063400901392	Client_Socket_build/CMakeFiles/Socket.dir/Socket_common.cpp.obj	c2e3d66ca3aa7a26
+1522	1583	7598063415903944	Client_Socket_build/libSocket.a	684cf3bb126d555c
+1583	1673	7598063416511801	Client.exe	972e4c9cdf36a573
