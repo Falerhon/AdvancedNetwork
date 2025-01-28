@@ -52,7 +52,7 @@ build cmake_object_order_depends_target_Client: phony || cmake_object_order_depe
 build CMakeFiles/Client.dir/main.cpp.obj: CXX_COMPILER__Client_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/main.cpp || cmake_object_order_depends_target_Client
   DEP_FILE = CMakeFiles\Client.dir\main.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  INCLUDES = -IC:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/./Libraries/Socket
+  INCLUDES = -IC:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/../Socket
   OBJECT_DIR = CMakeFiles\Client.dir
   OBJECT_FILE_DIR = CMakeFiles\Client.dir
 
@@ -64,9 +64,9 @@ build CMakeFiles/Client.dir/main.cpp.obj: CXX_COMPILER__Client_unscanned_Debug C
 #############################################
 # Link the executable Client.exe
 
-build Client.exe: CXX_EXECUTABLE_LINKER__Client_Debug CMakeFiles/Client.dir/main.cpp.obj | Libraries/Socket/libSocket.a || Libraries/Socket/libSocket.a
+build Client.exe: CXX_EXECUTABLE_LINKER__Client_Debug CMakeFiles/Client.dir/main.cpp.obj | Client_Socket_build/libSocket.a || Client_Socket_build/libSocket.a
   FLAGS = -g
-  LINK_LIBRARIES = Libraries/Socket/libSocket.a  -lws2_32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
+  LINK_LIBRARIES = Client_Socket_build/libSocket.a  -lws2_32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\Client.dir
   POST_BUILD = cd .
   PRE_LINK = cd .
@@ -111,29 +111,33 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
 build cmake_object_order_depends_target_Socket: phony || .
 
-build Libraries/Socket/CMakeFiles/Socket.dir/library.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/Libraries/Socket/library.cpp || cmake_object_order_depends_target_Socket
-  DEP_FILE = Libraries\Socket\CMakeFiles\Socket.dir\library.cpp.obj.d
+build Client_Socket_build/CMakeFiles/Socket.dir/library.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Socket/library.cpp || cmake_object_order_depends_target_Socket
+  DEFINES = -D_WIN32
+  DEP_FILE = Client_Socket_build\CMakeFiles\Socket.dir\library.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  OBJECT_DIR = Libraries\Socket\CMakeFiles\Socket.dir
-  OBJECT_FILE_DIR = Libraries\Socket\CMakeFiles\Socket.dir
+  OBJECT_DIR = Client_Socket_build\CMakeFiles\Socket.dir
+  OBJECT_FILE_DIR = Client_Socket_build\CMakeFiles\Socket.dir
 
-build Libraries/Socket/CMakeFiles/Socket.dir/Socket_windows.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/Libraries/Socket/Socket_windows.cpp || cmake_object_order_depends_target_Socket
-  DEP_FILE = Libraries\Socket\CMakeFiles\Socket.dir\Socket_windows.cpp.obj.d
+build Client_Socket_build/CMakeFiles/Socket.dir/Socket_windows.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Socket/Socket_windows.cpp || cmake_object_order_depends_target_Socket
+  DEFINES = -D_WIN32
+  DEP_FILE = Client_Socket_build\CMakeFiles\Socket.dir\Socket_windows.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  OBJECT_DIR = Libraries\Socket\CMakeFiles\Socket.dir
-  OBJECT_FILE_DIR = Libraries\Socket\CMakeFiles\Socket.dir
+  OBJECT_DIR = Client_Socket_build\CMakeFiles\Socket.dir
+  OBJECT_FILE_DIR = Client_Socket_build\CMakeFiles\Socket.dir
 
-build Libraries/Socket/CMakeFiles/Socket.dir/Socket_posix.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/Libraries/Socket/Socket_posix.cpp || cmake_object_order_depends_target_Socket
-  DEP_FILE = Libraries\Socket\CMakeFiles\Socket.dir\Socket_posix.cpp.obj.d
+build Client_Socket_build/CMakeFiles/Socket.dir/Socket_posix.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Socket/Socket_posix.cpp || cmake_object_order_depends_target_Socket
+  DEFINES = -D_WIN32
+  DEP_FILE = Client_Socket_build\CMakeFiles\Socket.dir\Socket_posix.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  OBJECT_DIR = Libraries\Socket\CMakeFiles\Socket.dir
-  OBJECT_FILE_DIR = Libraries\Socket\CMakeFiles\Socket.dir
+  OBJECT_DIR = Client_Socket_build\CMakeFiles\Socket.dir
+  OBJECT_FILE_DIR = Client_Socket_build\CMakeFiles\Socket.dir
 
-build Libraries/Socket/CMakeFiles/Socket.dir/Socket_common.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/Libraries/Socket/Socket_common.cpp || cmake_object_order_depends_target_Socket
-  DEP_FILE = Libraries\Socket\CMakeFiles\Socket.dir\Socket_common.cpp.obj.d
+build Client_Socket_build/CMakeFiles/Socket.dir/Socket_common.cpp.obj: CXX_COMPILER__Socket_unscanned_Debug C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Socket/Socket_common.cpp || cmake_object_order_depends_target_Socket
+  DEFINES = -D_WIN32
+  DEP_FILE = Client_Socket_build\CMakeFiles\Socket.dir\Socket_common.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
-  OBJECT_DIR = Libraries\Socket\CMakeFiles\Socket.dir
-  OBJECT_FILE_DIR = Libraries\Socket\CMakeFiles\Socket.dir
+  OBJECT_DIR = Client_Socket_build\CMakeFiles\Socket.dir
+  OBJECT_FILE_DIR = Client_Socket_build\CMakeFiles\Socket.dir
 
 
 # =============================================================================
@@ -141,47 +145,47 @@ build Libraries/Socket/CMakeFiles/Socket.dir/Socket_common.cpp.obj: CXX_COMPILER
 
 
 #############################################
-# Link the static library Libraries\Socket\libSocket.a
+# Link the static library Client_Socket_build\libSocket.a
 
-build Libraries/Socket/libSocket.a: CXX_STATIC_LIBRARY_LINKER__Socket_Debug Libraries/Socket/CMakeFiles/Socket.dir/library.cpp.obj Libraries/Socket/CMakeFiles/Socket.dir/Socket_windows.cpp.obj Libraries/Socket/CMakeFiles/Socket.dir/Socket_posix.cpp.obj Libraries/Socket/CMakeFiles/Socket.dir/Socket_common.cpp.obj
+build Client_Socket_build/libSocket.a: CXX_STATIC_LIBRARY_LINKER__Socket_Debug Client_Socket_build/CMakeFiles/Socket.dir/library.cpp.obj Client_Socket_build/CMakeFiles/Socket.dir/Socket_windows.cpp.obj Client_Socket_build/CMakeFiles/Socket.dir/Socket_posix.cpp.obj Client_Socket_build/CMakeFiles/Socket.dir/Socket_common.cpp.obj
   LANGUAGE_COMPILE_FLAGS = -g
-  OBJECT_DIR = Libraries\Socket\CMakeFiles\Socket.dir
+  OBJECT_DIR = Client_Socket_build\CMakeFiles\Socket.dir
   POST_BUILD = cd .
   PRE_LINK = cd .
-  TARGET_FILE = Libraries\Socket\libSocket.a
+  TARGET_FILE = Client_Socket_build\libSocket.a
   TARGET_PDB = Socket.a.dbg
 
 
 #############################################
 # Utility command for edit_cache
 
-build Libraries/Socket/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client\cmake-build-debug\Libraries\Socket && "C:\Program Files\JetBrains\CLion 2024.3.2\bin\cmake\win\x64\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+build Client_Socket_build/CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client\cmake-build-debug\Client_Socket_build && "C:\Program Files\JetBrains\CLion 2024.3.2\bin\cmake\win\x64\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
-build Libraries/Socket/edit_cache: phony Libraries/Socket/CMakeFiles/edit_cache.util
+build Client_Socket_build/edit_cache: phony Client_Socket_build/CMakeFiles/edit_cache.util
 
 
 #############################################
 # Utility command for rebuild_cache
 
-build Libraries/Socket/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client\cmake-build-debug\Libraries\Socket && "C:\Program Files\JetBrains\CLion 2024.3.2\bin\cmake\win\x64\bin\cmake.exe" --regenerate-during-build -SC:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client -BC:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client\cmake-build-debug"
+build Client_Socket_build/CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+  COMMAND = C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client\cmake-build-debug\Client_Socket_build && "C:\Program Files\JetBrains\CLion 2024.3.2\bin\cmake\win\x64\bin\cmake.exe" --regenerate-during-build -SC:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client -BC:\Users\alex-\Desktop\NETWORK\TP\AdvancedNetwork\TP1\Client\cmake-build-debug"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
 
-build Libraries/Socket/rebuild_cache: phony Libraries/Socket/CMakeFiles/rebuild_cache.util
+build Client_Socket_build/rebuild_cache: phony Client_Socket_build/CMakeFiles/rebuild_cache.util
 
 # =============================================================================
 # Target aliases.
 
 build Client: phony Client.exe
 
-build Socket: phony Libraries/Socket/libSocket.a
+build Socket: phony Client_Socket_build/libSocket.a
 
-build libSocket.a: phony Libraries/Socket/libSocket.a
+build libSocket.a: phony Client_Socket_build/libSocket.a
 
 # =============================================================================
 # Folder targets.
@@ -191,14 +195,14 @@ build libSocket.a: phony Libraries/Socket/libSocket.a
 #############################################
 # Folder: C:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/cmake-build-debug
 
-build all: phony Client.exe Libraries/Socket/all
+build all: phony Client.exe Client_Socket_build/all
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/cmake-build-debug/Libraries/Socket
+# Folder: C:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/cmake-build-debug/Client_Socket_build
 
-build Libraries/Socket/all: phony Libraries/Socket/libSocket.a
+build Client_Socket_build/all: phony Client_Socket_build/libSocket.a
 
 # =============================================================================
 # Built-in targets
@@ -207,14 +211,14 @@ build Libraries/Socket/all: phony Libraries/Socket/libSocket.a
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja: RERUN_CMAKE | C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCXXInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCommonLanguageInclude.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeGenericSystem.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeInitializeConfigs.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeLanguageInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeRCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInitialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/CMakeCommonCompilerMacros.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-windres.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/CMakeLists.txt C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/Libraries/Socket/CMakeLists.txt CMakeCache.txt CMakeFiles/3.30.5/CMakeCCompiler.cmake CMakeFiles/3.30.5/CMakeCXXCompiler.cmake CMakeFiles/3.30.5/CMakeRCCompiler.cmake CMakeFiles/3.30.5/CMakeSystem.cmake
+build build.ninja: RERUN_CMAKE | C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCXXInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCommonLanguageInclude.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeGenericSystem.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeInitializeConfigs.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeLanguageInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeRCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInitialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/CMakeCommonCompilerMacros.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-windres.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/CMakeLists.txt C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Socket/CMakeLists.txt CMakeCache.txt CMakeFiles/3.30.5/CMakeCCompiler.cmake CMakeFiles/3.30.5/CMakeCXXCompiler.cmake CMakeFiles/3.30.5/CMakeRCCompiler.cmake CMakeFiles/3.30.5/CMakeSystem.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCXXInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCommonLanguageInclude.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeGenericSystem.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeInitializeConfigs.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeLanguageInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeRCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInitialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/CMakeCommonCompilerMacros.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-windres.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/CMakeLists.txt C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/Libraries/Socket/CMakeLists.txt CMakeCache.txt CMakeFiles/3.30.5/CMakeCCompiler.cmake CMakeFiles/3.30.5/CMakeCXXCompiler.cmake CMakeFiles/3.30.5/CMakeRCCompiler.cmake CMakeFiles/3.30.5/CMakeSystem.cmake: phony
+build C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCXXInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeCommonLanguageInclude.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeGenericSystem.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeInitializeConfigs.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeLanguageInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeRCInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInformation.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/CMakeSystemSpecificInitialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/CMakeCommonCompilerMacros.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Compiler/GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-C.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX-ABI.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU-CXX.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-GNU.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows-windres.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/Windows.cmake C$:/Program$ Files/JetBrains/CLion$ 2024.3.2/bin/cmake/win/x64/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Client/CMakeLists.txt C$:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Socket/CMakeLists.txt CMakeCache.txt CMakeFiles/3.30.5/CMakeCCompiler.cmake CMakeFiles/3.30.5/CMakeCXXCompiler.cmake CMakeFiles/3.30.5/CMakeRCCompiler.cmake CMakeFiles/3.30.5/CMakeSystem.cmake: phony
 
 
 #############################################

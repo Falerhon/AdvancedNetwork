@@ -13,9 +13,11 @@ std::string TypeMessage() {
 int main() {
     Socket* socket = Socket::CreateSocket();
 
-    socket->CreateClientSocket("127.0.0.1");
-    std::string msg = "Hello World!";
-    socket->MessageSend(msg);
+    //Change the string here to change the destination IP
+    const std::string IPAddress = "127.0.0.1";
+    socket->CreateClientSocket(IPAddress);
+
+    socket->MessageSend(TypeMessage());
     char buffer[1024];
     socket->MessageReceived(buffer, sizeof(buffer));
     socket->CloseSocket();

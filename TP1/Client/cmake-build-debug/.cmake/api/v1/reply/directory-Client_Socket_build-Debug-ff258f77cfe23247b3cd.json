@@ -8,7 +8,7 @@
 	"installers" : [],
 	"paths" : 
 	{
-		"build" : ".",
-		"source" : "."
+		"build" : "Client_Socket_build",
+		"source" : "C:/Users/alex-/Desktop/NETWORK/TP/AdvancedNetwork/TP1/Socket"
 	}
 }
