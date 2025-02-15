@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <falcon.h>
+#include <random>
 
 #include "spdlog/spdlog.h"
 
@@ -60,17 +61,18 @@ int main()
 
 uint64_t RegisterUser(std::string& address) {
     //Generate a random identifier
-    const uint64_t z = 0x9FB21C651E98DF25;
-    uint64_t n;
-    n ^= ((n << 49) | (n >> 15)) ^ ((n << 24) | (n >> 40));
-    n *= z;
-    n ^= n >> 35;
-    n *= z;
-    n ^= n >> 28;
+    std::random_device rd;
+    std::mt19937 gen(rd());
 
+    std::uniform_int_distribution<unsigned long long> dis(
+        std::numeric_limits<std::uint64_t>::min(),
+        std::numeric_limits<std::uint64_t>::max()
+    );
+
+    uint64_t UUID = dis(gen);
     //Add user to known user list
-    knownUsers.emplace_back(n, address);
-    return n;
+    knownUsers.emplace_back(UUID, address);
+    return UUID;
 }
 
 void ConnectionConfirmation(uint64_t UUID) {
