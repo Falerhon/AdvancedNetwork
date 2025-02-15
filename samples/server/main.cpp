@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include <falcon.h>
-#include <winsock2.h>
 
 #include "spdlog/spdlog.h"
 
