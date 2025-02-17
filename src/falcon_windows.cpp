@@ -109,10 +109,6 @@ std::unique_ptr<Falcon> Falcon::Listen(const std::string& endpoint, uint16_t por
     return falcon;
 }
 
-void Falcon::OnClientConnected(std::function<void(uint64_t)> handler) {
-    serverConnectionHandler = std::move(handler);
-}
-
 std::unique_ptr<Falcon> Falcon::Connect(const std::string& serverIp, uint16_t port)
 {
     sockaddr local_endpoint = StringToIp(serverIp, port);
@@ -127,10 +123,6 @@ std::unique_ptr<Falcon> Falcon::Connect(const std::string& serverIp, uint16_t po
     }
 
     return falcon;
-}
-
-void Falcon::OnConnectionEvent(std::function<void(bool, uint64_t)> handler) {
-    clientConnectionHandler = std::move(handler);
 }
 
 int Falcon::SendToInternal(const std::string &to, uint16_t port, std::span<const char> message)
@@ -159,4 +151,9 @@ int Falcon::ReceiveFromInternal(std::string &from, std::span<char, 65535> messag
     from = IpToString(reinterpret_cast<const sockaddr*>(&peer_addr));
 
     return read_bytes;
+}
+
+void Falcon::SetBlocking(bool block) {
+    u_long blocking = (block) ? 0 : 1;
+    ioctlsocket(m_socket, FIONBIO, &blocking);
 }

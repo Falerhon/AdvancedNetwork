@@ -129,3 +129,8 @@ int Falcon::ReceiveFromInternal(std::string &from, std::span<char, 65535> messag
 
     return read_bytes;
 }
+
+void Falcon::SetBlocking(bool block) {
+    int blocking = (block) ? 0 : 1;
+    ioctl(m_socket, FIONBIO, &blocking);
+}
