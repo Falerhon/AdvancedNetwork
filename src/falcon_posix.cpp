@@ -2,6 +2,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <memory>
 #include <fmt/core.h>
@@ -132,5 +133,6 @@ int Falcon::ReceiveFromInternal(std::string &from, std::span<char, 65535> messag
 
 void Falcon::SetBlocking(bool block) {
     int blocking = (block) ? 0 : 1;
-    ioctl(m_socket, FIONBIO, &blocking);
+    //TODO: set blocking to false
+    fcntl(m_socket, F_SETFL, blocking)
 }
