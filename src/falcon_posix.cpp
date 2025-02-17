@@ -134,5 +134,5 @@ int Falcon::ReceiveFromInternal(std::string &from, std::span<char, 65535> messag
 void Falcon::SetBlocking(bool block) {
     int blocking = (block) ? 0 : 1;
     //TODO: set blocking to false
-    fcntl(m_socket, F_SETFL, blocking)
+    fcntl(m_socket, F_SETFL, blocking);
 }
