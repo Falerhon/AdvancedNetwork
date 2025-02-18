@@ -72,14 +72,17 @@ int main() {
 
             strid.erase(strid.begin());
 
+            //Avoid error if returned ID is invalid
+            try {
+                //Get the message sender UUID
+                SearchedUUID = std::stoull(strid);
+            } catch (const std::invalid_argument &e) {
+            }
+
+
             switch (messageType) {
                 //Connection
                 case 0: {
-                    //Avoid error if returned ID is invalid
-                    try {
-                        SearchedUUID = std::stoull(strid);
-                    } catch (const std::invalid_argument &e) {
-                    }
 
                     //Check if user is known
                     if (std::find(knownUsers.begin(), knownUsers.end(), SearchedUUID) == knownUsers.end()) {
@@ -112,6 +115,22 @@ int main() {
                 case 3:
                     std::cout << "Not implemented yet" << std::endl;
                     break;
+                //Ping
+                case 4:
+                    if (int it = std::find(knownUsers.begin(), knownUsers.end(), SearchedUUID) == knownUsers.end()) {
+                        std::cout << "Unknown user tried to ping" << std::endl;
+                    } else {
+                        std::cout << SearchedUUID <<" sent a ping" << std::endl;
+                        knownUsers[it].lastPing = std::chrono::high_resolution_clock::now();
+                        std::string message = "Ping recieved";
+                        ComposeMessage(PING_ACK, message);
+                        falcon->SendTo(knownUsers[it].address, port, std::span{message.data(), static_cast<unsigned long>(message.length())});
+                    }
+                break;
+                //Ping_ACK
+                case 5:
+                    std::cout << "Not implemented yet" << std::endl;
+                break;
                 default:
                     std::cout << "Unknown message type " << messageType << std::endl;
                     break;
@@ -156,7 +175,7 @@ std::vector<uint64_t> CheckPing() {
     std::vector<uint64_t> TimedOutUsers;
     for (auto user: knownUsers) {
         if (std::chrono::high_resolution_clock::now() - user.lastPing > std::chrono::seconds(TIMEOUTTIME)) {
-            std::cout << user.UUID << "has timed out" << std::endl;
+            std::cout << user.UUID << " has timed out" << std::endl;
             TimedOutUsers.push_back(user.UUID);
         }
     }
