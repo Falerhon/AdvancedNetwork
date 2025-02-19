@@ -11,8 +11,11 @@ else ()
 endif (WIN32)
 
 add_library(falcon STATIC inc/falcon.h src/falcon_common.cpp ${FALCON_BACKEND})
+add_library(stream STATIC inc/stream.h src/stream.cpp)
 target_include_directories(falcon PUBLIC inc)
+target_include_directories(stream PUBLIC inc)
 target_link_libraries(falcon PUBLIC spdlog::spdlog_header_only fmt::fmt-header-only)
+target_link_libraries(falcon PUBLIC stream)
 
 if(WIN32)
     target_link_libraries(falcon PRIVATE ${WINDOWS_LIBS})

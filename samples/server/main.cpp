@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <falcon.h>
+#include <stream.h>
 #include <random>
 
 #include "spdlog/spdlog.h"
@@ -34,7 +35,10 @@ void ClientDisconnected(uint64_t UUID);
 int main() {
     spdlog::set_level(spdlog::level::debug);
     spdlog::debug("Hello World!");
+    //Users to remove from known users
     std::vector<uint64_t> UsersToDisconnect;
+    //Streams existing on this instance
+    std::map<uint32_t, std::unique_ptr<Stream>> existingStream;
 
     auto falcon = Falcon::Listen("127.0.0.1", 5555);
     falcon->SetBlocking(false);
@@ -59,6 +63,7 @@ int main() {
             port = atoi(port_str.c_str());
         }
 
+        //Making sure there is a message to be read
         if (!buffer[0] == '\0') {
             //Converting buffer data to string
             std::string strid = buffer.data();
@@ -66,6 +71,7 @@ int main() {
             uint64_t SearchedUUID = 0;
 
             int messageType = -1;
+
 
             //ASCII to numeral
             messageType = strid.front() - 48;
@@ -77,13 +83,12 @@ int main() {
                 //Get the message sender UUID
                 SearchedUUID = std::stoull(strid);
             } catch (const std::invalid_argument &e) {
+                SearchedUUID = -1;
             }
-
 
             switch (messageType) {
                 //Connection
                 case 0: {
-
                     //Check if user is known
                     if (std::find(knownUsers.begin(), knownUsers.end(), SearchedUUID) == knownUsers.end()) {
                         SearchedUUID = RegisterUser(ip);
@@ -107,6 +112,7 @@ int main() {
                 case 1:
                     std::cout << "Client : " << buffer.data() << std::endl;
                     break;
+                //TODO : Implement this
                 //Disconnection
                 case 2:
                     std::cout << "Not implemented yet" << std::endl;
@@ -116,19 +122,53 @@ int main() {
                     std::cout << "Not implemented yet" << std::endl;
                     break;
                 //Ping
-                case 4:
-                    if (int it = std::find(knownUsers.begin(), knownUsers.end(), SearchedUUID) == knownUsers.end()) {
+                case 4: {
+                    //Find the sending user
+                    const auto it = std::find(knownUsers.begin(), knownUsers.end(), SearchedUUID);
+                    if (it == knownUsers.end()) {
                         std::cout << "Unknown user tried to ping" << std::endl;
                     } else {
-                        std::cout << SearchedUUID <<" sent a ping" << std::endl;
-                        knownUsers[it].lastPing = std::chrono::high_resolution_clock::now();
+                        //For debug purposes
+                        //std::cout << SearchedUUID <<" sent a ping" << std::endl;
+                        it->lastPing = std::chrono::high_resolution_clock::now();
                         std::string message = "Ping recieved";
                         ComposeMessage(PING_ACK, message);
-                        falcon->SendTo(knownUsers[it].address, port, std::span{message.data(), static_cast<unsigned long>(message.length())});
+                        falcon->SendTo(it->address, port, std::span{message.data(), static_cast<unsigned long>(message.length())});
                     }
-                break;
+                break;}
                 //Ping_ACK
                 case 5:
+                    std::cout << "Not implemented yet" << std::endl;
+                break;
+                //StreamCreate
+                case 6: {
+                    const auto it = std::find(knownUsers.begin(), knownUsers.end(), SearchedUUID);
+                    if (it == knownUsers.end()) {
+                        std::cout << "Unknown user tried to ping" << std::endl;
+                    } else {
+                        auto stream = Stream::CreateStream(SearchedUUID, false);
+                        auto streamId = stream->id;
+                        //Adding the stream
+                        existingStream.insert(std::pair(stream->id, std::move(stream)));
+                        //Preparing the stream created message
+                        std::string message = std::to_string(streamId);
+                        ComposeMessage(STREAM_CREATE, message);
+
+                        falcon->SendTo(it->address, port, std::span{message.data(), static_cast<unsigned long>(message.length())});
+                    }
+
+                    std::cout << "Stream Created" << std::endl;
+                break;}
+                //Stream_Create_ACK
+                case 7:
+                    std::cout << "Stream creation acknowledged!" << std::endl;
+                break;
+                //Stream_Data
+                case 8:
+                    std::cout << "Not implemented yet" << std::endl;
+                break;
+                //Stream_Data_ACK
+                case 9:
                     std::cout << "Not implemented yet" << std::endl;
                 break;
                 default:
@@ -173,7 +213,7 @@ void ConnectionConfirmation(uint64_t UUID) {
 
 std::vector<uint64_t> CheckPing() {
     std::vector<uint64_t> TimedOutUsers;
-    for (auto user: knownUsers) {
+    for (const auto& user: knownUsers) {
         if (std::chrono::high_resolution_clock::now() - user.lastPing > std::chrono::seconds(TIMEOUTTIME)) {
             std::cout << user.UUID << " has timed out" << std::endl;
             TimedOutUsers.push_back(user.UUID);
@@ -183,7 +223,7 @@ std::vector<uint64_t> CheckPing() {
 }
 
 void ClientDisconnected(uint64_t UUID) {
-    knownUsers.erase(std::remove(knownUsers.begin(), knownUsers.end(), UUID), knownUsers.end());
+    knownUsers.erase(std::find(knownUsers.begin(), knownUsers.end(), UUID));
 }
 
 void ComposeMessage(MessageType type, std::string &message) {

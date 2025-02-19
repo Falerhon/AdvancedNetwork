@@ -20,6 +20,10 @@ enum MessageType {
     DISCONNECT_ACK,
     PING,
     PING_ACK,
+    STREAM_CREATE,
+    STREAM_CREATE_ACK,
+    STREAM_DATA,
+    STREAM_DATA_ACK,
 };
 
 #define TIMEOUTTIME 3
