@@ -114,12 +114,23 @@ int main() {
                     break;
                 //TODO : Implement this
                 //Disconnection
-                case 2:
-                    std::cout << "Not implemented yet" << std::endl;
+                case 2: {
+                    std::cout << "Client sent disconnection : " << SearchedUUID << std::endl;
+
+                    std::string message;
+                    ComposeMessage(DISCONNECT_ACK, message);
+                    falcon->SendTo(
+                        ip, port, std::span{message.data(), static_cast<unsigned long>(message.length())});
+
+                    falcon->clientDisconnectionHandler(SearchedUUID);
+
                     break;
+                }
                 //Disconnection_ACK
                 case 3:
-                    std::cout << "Not implemented yet" << std::endl;
+                    std::cout << "Client acknowledged disconnection" << std::endl;
+
+                    falcon->clientDisconnectionHandler(SearchedUUID);
                     break;
                 //Ping
                 case 4: {
@@ -133,6 +144,7 @@ int main() {
                         it->lastPing = std::chrono::high_resolution_clock::now();
                         std::string message = "Ping recieved";
                         ComposeMessage(PING_ACK, message);
+
                         falcon->SendTo(it->address, port, std::span{message.data(), static_cast<unsigned long>(message.length())});
                     }
                 break;}
@@ -181,6 +193,12 @@ int main() {
         if (UsersToDisconnect.size() > 0) {
             for (auto user: UsersToDisconnect) {
                 falcon->clientDisconnectionHandler(user);
+                //Telling the client we are disconnecting them
+                //Most likely won't reach the client
+                std::string message;
+                ComposeMessage(DISCONNECT, message);
+                falcon->SendTo(
+                    ip, port, std::span{message.data(), static_cast<unsigned long>(message.length())});
             }
         }
     }
@@ -223,7 +241,10 @@ std::vector<uint64_t> CheckPing() {
 }
 
 void ClientDisconnected(uint64_t UUID) {
-    knownUsers.erase(std::find(knownUsers.begin(), knownUsers.end(), UUID));
+    const auto it = std::find(knownUsers.begin(), knownUsers.end(), UUID);
+    if (it != knownUsers.end()) {
+        knownUsers.erase(it);
+    }
 }
 
 void ComposeMessage(MessageType type, std::string &message) {

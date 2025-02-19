@@ -73,19 +73,26 @@ int main() {
 
                     falcon->clientConnectionHandler(success, FoundUUID);
 
+                    message.clear();
                     message = "Connected!";
                     ComposeMessage(CONNECT_ACK, message);
                     falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
-                    message.clear();
+
                 }
                 break;
                 //Disconnection
                 case 2:
-                    std::cout << "Not implemented yet" << std::endl;
+                    message.clear();
+                    ComposeMessage(DISCONNECT_ACK, message);
+                    falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+
+                std::cout << "Server sent disconnection" << std::endl;
+                    falcon->serverDisconnectionHandler();
                 break;
                 //Disconnection_ACK
                 case 3:
-                    std::cout << "Not implemented yet" << std::endl;
+                    std::cout << "Server acknowledged the disconnection" << std::endl;
+                    falcon->serverDisconnectionHandler();
                 break;
                 //Ping
                 case 4:
@@ -98,7 +105,6 @@ int main() {
                 break;
                 //StreamCreate
                 case 6: {
-
                     std::cout << "Server created a stream" << std::endl;
 
                     std::string dataStr = buffer.data();
@@ -164,6 +170,13 @@ int main() {
 
         if (std::chrono::high_resolution_clock::now() - lastPing_ack > std::chrono::seconds(TIMEOUTTIME)) {
             std::cout << "Server has timed out" << std::endl;
+
+            //Telling the server we are disconnecting
+            //Most likely won't reach the server
+            message.clear();
+            ComposeMessage(DISCONNECT, message);
+            falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+
             break;
         }
     }
