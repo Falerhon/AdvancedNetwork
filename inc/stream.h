@@ -6,10 +6,10 @@
 #ifndef STREAM_H
 #define STREAM_H
 
+#include <list>
 #include<string>
 #include<memory>
 #include<span>
-#include <vector>
 
 class Stream {
 public:
@@ -32,7 +32,7 @@ public:
     //Only needed on the server
     uint64_t linkedClient = 0;
     bool isReliable = false;
-    std::vector<std::span<const char>> previousData;
+    std::list<std::span<const char>> previousData;
 
 
 

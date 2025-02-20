@@ -11,6 +11,8 @@ void ComposeMessage(MessageType type, std::string& message);
 void ConnectionEvent(bool success, uint64_t uuid);
 void Disconnection();
 
+std::unique_ptr<Falcon> falcon;
+
 int main() {
     spdlog::set_level(spdlog::level::debug);
     spdlog::debug("Hello World!");
@@ -18,11 +20,11 @@ int main() {
     std::chrono::time_point<std::chrono::high_resolution_clock> lastPing_ack = std::chrono::high_resolution_clock::now();
 
     //Streams existing on this instance
-    std::map<uint32_t, std::unique_ptr<Stream>> existingStream;
+    std::vector<std::unique_ptr<Stream>> existingStream = {};
 
     bool doOnce = false;
 
-    auto falcon = Falcon::Connect("127.0.0.1", 5556);
+    falcon = Falcon::Connect("127.0.0.1", 5556);
     falcon->SetBlocking(false);
     falcon->OnConnectionEvent(ConnectionEvent);
     falcon->OnDisconnect(Disconnection);
@@ -43,13 +45,9 @@ int main() {
         falcon->ReceiveFrom(from_ip, buffer);
 
         if (!buffer[0] == '\0') {
-            std::string strid = buffer.data();
 
             //Get the message type
-            int messageType = -1;
-            //ASCII to numeral
-            messageType = strid.front() - 48;
-            strid.erase(strid.begin());
+            int messageType = buffer[0] & 0x0F;
 
             switch (messageType) {
                 //Connection
@@ -59,17 +57,11 @@ int main() {
                 //Connectio_ACK
                 case 1: {
                     uint64_t FoundUUID = -1;
-                    bool success = false;
-                    try {
-                        success = (int)strid.front() - 48;
-                    }catch(const std::invalid_argument& e){}
-                    strid.erase(strid.begin());
+                    bool success;
 
-                    if (success) {
-                        FoundUUID = std::stoull(strid);
-                    } else {
-                        FoundUUID = -1;
-                    }
+                    success = buffer[0]>>4 & 0x1;
+
+                    memcpy(&FoundUUID, &buffer[1], sizeof(uint64_t));
 
                     falcon->clientConnectionHandler(success, FoundUUID);
 
@@ -108,43 +100,40 @@ int main() {
                     std::cout << "Server created a stream" << std::endl;
 
                     std::string dataStr = buffer.data();
-
-                    uint32_t FoundStreamId = -1;
-                    bool success = false;
-                    try {
-                        success = (int)dataStr.front() - 48;
-                    }catch(const std::invalid_argument& e){}
+                    //Remove message type
                     dataStr.erase(dataStr.begin());
 
-                    if (success) {
+                    uint32_t FoundStreamId = -1;
+                    try {
                         FoundStreamId = std::stoull(dataStr);
-                    } else {
-                        std::cout << "Could not find stream ID" << std::endl;
-                        break;
+                    }catch(const std::invalid_argument& e){}
+
+                    if (FoundStreamId != -1) {
+                        auto stream = Stream::CreateStream(false, FoundStreamId);
+                        auto streamId = stream->id;
+                        //Adding the stream
+                        existingStream.push_back(std::move(stream));
+                        //Preparing the stream created message
+                        message.clear();
+                        message = std::to_string(streamId);
+                        ComposeMessage(STREAM_CREATE_ACK, message);
+                        falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
                     }
 
-                    auto stream = Stream::CreateStream(false, FoundStreamId);
-                    auto streamId = stream->id;
-                    //Adding the stream
-                    existingStream.insert(std::pair(stream->id, std::move(stream)));
-                    //Preparing the stream created message
-                    message.clear();
-                    message = std::to_string(streamId);
-                    ComposeMessage(STREAM_CREATE_ACK, message);
-                    falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
                     break;
                 }
                 //StreamCreate_ACK
                 case 7:
-                    std::cout << "Not implemented yet" << std::endl;
+                    std::cout << "Acknowledged stream creation" << std::endl;
                 break;
                 //StreamData
                 case 8:
-                    std::cout << "Not implemented yet" << std::endl;
+                    std::cout << "Data recieved" << std::endl;
+                    //TODO : STREAM READING DATA
                 break;
                 //StreamData_ACK
                 case 9:
-                    std::cout << "Not implemented yet" << std::endl;
+                    std::cout << "Acknowledged stream data" << std::endl;
                 break;
                 default:
                     std::cout << "Unknown message type " << messageType << std::endl;
@@ -164,6 +153,12 @@ int main() {
                 message.clear();
                 //Ask the server to create the stream
                 ComposeMessage(STREAM_CREATE, message);
+                falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+            } else if (false){
+                message.clear();
+                message = std::to_string(existingStream[0]->id) + "Heya";
+                //Send data on the stream
+                ComposeMessage(STREAM_DATA, message);
                 falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
             }
         }

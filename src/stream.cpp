@@ -31,6 +31,9 @@ void Stream::CloseStream(const Stream &stream) {
 
 void Stream::SendData(std::span<const char> Data) {
     std::cout << "Sending message to linked client" << std::endl;
+    if (isReliable) {
+        std::cout << "Stream is reliable" << std::endl;
+    }
 }
 
 void Stream::OnDataReceived(std::span<const char> Data) {
