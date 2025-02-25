@@ -54,13 +54,11 @@ uint32_t Falcon::CreateStreamFromExternal(uint32_t id, uint64_t clientId, std::s
     return idCreated;
 }
 
-void Falcon::HandleStreamData(std::span<char, 65535> message) {
-    uint32_t destId;
-    memcpy(&destId, &message[1], sizeof(destId));
-    if (existingStream.contains(destId)) {
-        existingStream.find(destId)->second->OnDataReceived(message);
+void Falcon::HandleStreamData(uint32_t streamId, std::span<char, 65535> message) {
+    if (existingStream.contains(streamId)) {
+        existingStream.find(streamId)->second->OnDataReceived(message);
     } else {
-        std::cout << "Stream ID not found : " << std::to_string(destId) << std::endl;
+        std::cout << "Stream ID not found : " << std::to_string(streamId) << std::endl;
     }
 }
 

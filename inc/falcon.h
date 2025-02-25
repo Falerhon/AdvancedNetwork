@@ -79,7 +79,7 @@ public:
     //Server stream creation from external request
     uint32_t CreateStreamFromExternal(uint32_t id, uint64_t clientId, std::string endpIp, int endpPort, bool reliable);
 
-    void HandleStreamData(std::span<char, 65535> message);
+    void HandleStreamData(uint32_t streamId, std::span<char, 65535> message);
     void SendStreamData(std::span<char, 65535> message, uint32_t streamId);
 
 private:

@@ -179,7 +179,9 @@ int main() {
 
                     //std::cout << "Recieving stream data" << mess.Data.data() << std::endl;
                     //TODO : STREAM READING DATA
-                    falcon->HandleStreamData(recieveBuffer);
+                    uint32_t streamId;
+                    memcpy(&streamId, &recieveBuffer[1], sizeof(streamId));
+                    falcon->HandleStreamData(streamId, recieveBuffer);
                     break;
                 }
                 //Stream_Data_ACK
