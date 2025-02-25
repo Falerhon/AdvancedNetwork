@@ -5,6 +5,7 @@
 #include <string>
 #include <span>
 #include <iostream>
+#include <array>
 
 #include "stream.h"
 
