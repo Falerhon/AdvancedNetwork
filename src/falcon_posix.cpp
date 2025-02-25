@@ -6,6 +6,9 @@
 
 #include <memory>
 #include <fmt/core.h>
+
+#include <algorithm>
+
 #include "falcon.h"
 
 std::string IpToString(const sockaddr* sa)
