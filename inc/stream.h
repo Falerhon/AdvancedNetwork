@@ -17,11 +17,15 @@ class Falcon;
 
 class Stream {
 public:
-    static std::unique_ptr<Stream> CreateStream(uint64_t client, std::string endpIp, int endpPort, bool reliable, Falcon* socket); //Server API
-    static std::unique_ptr<Stream> CreateStreamExternal(uint32_t id, uint64_t client, std::string endpIp, int endpPort, bool reliable, Falcon* socket); //Server API
+    explicit Stream(Falcon &socket)
+        : socket(socket) {
+    }
 
-    static std::unique_ptr<Stream> CreateStream(bool reliable, Falcon* socket); //Client API
-    static std::unique_ptr<Stream> CreateStreamExternal(uint32_t id, bool reliable, Falcon* socket); //Client API
+    static std::unique_ptr<Stream> CreateStream(uint64_t client, std::string endpIp, int endpPort, bool reliable, Falcon& socket); //Server API
+    static std::unique_ptr<Stream> CreateStreamExternal(uint32_t id, uint64_t client, std::string endpIp, int endpPort, bool reliable, Falcon& socket); //Server API
+
+    static std::unique_ptr<Stream> CreateStream(bool reliable, Falcon& socket); //Client API
+    static std::unique_ptr<Stream> CreateStreamExternal(uint32_t id, bool reliable, Falcon& socket); //Client API
 
     void CloseStream(const Stream& stream); //Server API
 
@@ -43,7 +47,7 @@ private:
     std::map<int, int> previousData;
 
     //Socket this stream is linked to
-    Falcon* socket;
+    Falcon& socket;
 
 };
 

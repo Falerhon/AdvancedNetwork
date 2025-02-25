@@ -48,6 +48,7 @@ int main() {
     std::string from_ip;
     from_ip.resize(255);
     std::array<char, 65535> buffer;
+    uint32_t streamId = -1;
 
     while (true) {
         //Clearing the buffer
@@ -101,7 +102,7 @@ int main() {
                 break;
                 //Ping_ACK
                 case 5:
-                    std::cout << "Ping acknowledged" << std::endl;
+                    //std::cout << "Ping acknowledged" << std::endl;
                     lastPing_ack = std::chrono::high_resolution_clock::now();
                 break;
                 //StreamCreate
@@ -143,7 +144,7 @@ int main() {
         }
 
         if (std::chrono::high_resolution_clock::now() - lastPing > std::chrono::seconds(PINGTIME)) {
-            std::cout << "Sending ping to server" << std::endl;
+            //std::cout << "Sending ping to server" << std::endl;
             ClientMessage message = ClientMessage(CurrentUUID);
             std::array<char, 65535> SendBuffer;
             message.MessType = PING;
@@ -165,15 +166,15 @@ int main() {
                 message.WriteBuffer(SendBufferTemp);
 
                 falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
-            } else if (false){
-                ClientMessage messageTemp = ClientMessage(CurrentUUID);
-                std::array<char, 65535> SendBufferTemp;
-                message.MessType = STREAM_DATA;
-                std::string dataStr = "Heya";
-                memcpy(&message.Data, dataStr.data(), dataStr.size());
-                message.WriteBuffer(SendBuffer);
 
-                falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
+                streamId = id;
+            } else{
+
+                if (streamId != -1) {
+                    std::array<char, 65535> SendBufferTemp;
+                    falcon->SendStreamData(SendBufferTemp, streamId);
+                }
+
             }
         }
 

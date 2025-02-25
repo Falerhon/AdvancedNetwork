@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <span>
+#include <iostream>
 
 #include "stream.h"
 
@@ -77,6 +78,9 @@ public:
     uint32_t CreateStreamFromExternal(uint32_t id, bool reliable);
     //Server stream creation from external request
     uint32_t CreateStreamFromExternal(uint32_t id, uint64_t clientId, std::string endpIp, int endpPort, bool reliable);
+
+    void HandleStreamData(std::span<char, 65535> message);
+    void SendStreamData(std::span<char, 65535> message, uint32_t streamId);
 
 private:
     int SendToInternal(const std::string& to, uint16_t port, std::span<const char> message);

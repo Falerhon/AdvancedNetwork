@@ -165,7 +165,7 @@ int main() {
                     } else {
                             uint32_t id;
                             memcpy(&id, &mess.Data[0], sizeof(id));
-                            uint32_t idCreated = falcon->CreateStreamFromExternal(id, false);
+                            uint32_t idCreated = falcon->CreateStreamFromExternal(id, it->UUID, it->address, it->port, false);
                             std::cout << "Stream Created : " << std::to_string(idCreated) << std::endl;
                         }
                 break;}
@@ -177,8 +177,9 @@ int main() {
                 //Stream_Data
                 case 8: {
 
-                    std::cout << "Recieving stream data" << mess.Data.data() << std::endl;
+                    //std::cout << "Recieving stream data" << mess.Data.data() << std::endl;
                     //TODO : STREAM READING DATA
+                    falcon->HandleStreamData(recieveBuffer);
                     break;
                 }
                 //Stream_Data_ACK
