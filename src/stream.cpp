@@ -66,45 +66,91 @@ void Stream::SendData(std::span<const char> Data) {
     std::array<char, 65535> SendBuffer;
 
     char chrType = MessageType::STREAM_DATA & 0x0F;
-
+    size_t offset = 0;
     //Type of the message
-    memcpy(&SendBuffer[0], &chrType, sizeof(chrType));
+    memcpy(&SendBuffer[offset], &chrType, sizeof(chrType));
+    offset += sizeof(chrType);
+
     //Stream ID
-    memcpy(&SendBuffer[1], &id, sizeof(id));
+    memcpy(&SendBuffer[offset], &id, sizeof(id));
+    offset += sizeof(id);
+
+    //Amount of package to read
+    int numPackage = 1;
+    memcpy(&SendBuffer[offset], &numPackage, sizeof(numPackage));
+    offset += sizeof(numPackage);
+
+    //Packet Size
+    size_t packetSize = sizeof(currentPacketId) + sizeof(packetContent);
+    memcpy(&SendBuffer[offset], &packetSize, sizeof(packetSize));
+    offset += sizeof(packetSize);
+
     //Package ID
-    memcpy(&SendBuffer[6], &currentPacketId, sizeof(currentPacketId));
+    memcpy(&SendBuffer[offset], &currentPacketId, sizeof(currentPacketId));
+    offset += sizeof(currentPacketId);
+
     //Rest of the data
-    memcpy(&SendBuffer[7], &packetContent, sizeof(packetContent));
-
+    memcpy(&SendBuffer[offset], &packetContent, sizeof(packetContent));
+    offset += sizeof(packetContent);
     if (isReliable) {
-        std::cout << "Stream is reliable" << std::endl;
         previousData.insert(std::pair{currentPacketId, packetContent});
-
-        //Reliability
     }
 
-    socket.SendTo(endpointIp, endpointPort, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
-
+    socket.SendTo(endpointIp, endpointPort, std::span{SendBuffer.data(), offset});
     currentPacketId++;
 }
 
 void Stream::OnDataReceived(std::span<const char> Data) {
     std::cout << "Received message from client" << std::endl;
 
-    char messageType;
-    memcpy(&messageType, &Data[0], sizeof(messageType));
-    uint8_t recId;
-    memcpy(&recId, &Data[6], sizeof(recId));
-    int packetContent;
-    memcpy(&packetContent, &Data[7], sizeof(packetContent));
+    size_t offset = 0;
 
-    std::cout << "Stream : " << std::to_string(id) << " packet ID : " << std::to_string(recId) << " message type : " << std::to_string(messageType) <<
-            " Data : " << std::to_string(packetContent) << std::endl;
+    //Message Type
+    char chrType;
+    memcpy(&chrType, &Data[offset], sizeof(chrType));
+    offset += sizeof(chrType);
 
-    if (receivedPackets.size() > 32)
-        receivedPackets.erase(receivedPackets.begin());
+    //StreamID
+    uint32_t streamID;
+    memcpy(&streamID, &Data[offset], sizeof(streamID));
+    offset += sizeof(streamID);
 
-    receivedPackets.push_back(recId);
+    //Number of packets to read
+    int numOfPackets;
+    memcpy(&numOfPackets, &Data[offset], sizeof(numOfPackets));
+    offset += sizeof(numOfPackets);
+
+    for (int i = 0; i < numOfPackets; i++) {
+        std::cout << "Loop # " << i << std::endl;
+        size_t packetSize = sizeof(uint8_t) + sizeof(int);
+
+        std::cout << "packetSize Offset : " << offset << std::endl;
+        offset += sizeof(packetSize);
+        std::cout << "packetID Offset : " << offset << std::endl;
+
+        //Packet ID
+        uint8_t packetID;
+        memcpy(&packetID, &Data[offset], sizeof(packetID));
+        offset += sizeof(packetID);
+        std::cout << "packetData Offset : " << offset << std::endl;
+
+        //Packet Data
+        int packetData;
+        memcpy(&packetData, &Data[offset], sizeof(packetData));
+        offset += sizeof(packetData);
+        std::cout << "Final offset (of this loop) : " << offset << std::endl;
+
+        std::cout << "Message type : " << std::to_string(chrType) << " stream : " << std::to_string(streamID) << " num of packets : " <<
+                std::to_string(numOfPackets) << " packet size : " << std::to_string(packetSize) << " packet ID : " <<
+                std::to_string(packetID) << " data : " << std::to_string(packetData) << std::endl;
+
+        //Add the packets to the receivedPackets
+        if (receivedPackets.size() > 32)
+            receivedPackets.erase(receivedPackets.begin());
+
+        receivedPackets.push_back(packetID);
+    }
+
     std::sort(receivedPackets.begin(), receivedPackets.end());
 
     SendAcknowledgment();
@@ -113,15 +159,17 @@ void Stream::OnDataReceived(std::span<const char> Data) {
 void Stream::OnAcknowledgedReceived(std::span<const char> Data) {
     char messageType;
     memcpy(&messageType, &Data[0], sizeof(messageType));
+
+    uint32_t streamID;
+    memcpy(&streamID, &Data[1], sizeof(streamID));
+
     uint8_t recId;
     memcpy(&recId, &Data[6], sizeof(recId));
-    int packetContent;
-    memcpy(&packetContent, &Data[7], sizeof(packetContent));
-    std::array<uint8_t, 4> history;
-    memcpy(&history, &Data[14], sizeof(history));
 
-    std::cout << "Stream : " << std::to_string(id) << " packet ID : " << std::to_string(recId) << " message type : " << std::to_string(messageType) <<
-            " Data : " << std::to_string(packetContent);
+    std::array<uint8_t, 4> history;
+    memcpy(&history, &Data[7], sizeof(history));
+
+
     // Convert history to bitset for easy visualization
     std::bitset<32> historyBits(
         (static_cast<uint32_t>(history[0]) << 24) |
@@ -130,14 +178,11 @@ void Stream::OnAcknowledgedReceived(std::span<const char> Data) {
         (static_cast<uint32_t>(history[3]))
     );
 
-    std::cout << " History (Received Packets): " << historyBits << std::endl;
+    std::cout << "MsgType : " << std::to_string(messageType) << " streamID : " << std::to_string(id) << " packet ID : " << std::to_string(recId) <<
+            " History (Received Packets): " << historyBits << std::endl;
 
-    if (receivedPackets.size() > 32)
-        receivedPackets.erase(receivedPackets.begin());
-
-    receivedPackets.push_back(recId);
-    std::sort(receivedPackets.begin(), receivedPackets.end());
-
+    if (isReliable)
+        HandleReliability(recId, history);
 }
 
 void Stream::SendAcknowledgment() {
@@ -153,7 +198,6 @@ void Stream::SendAcknowledgment() {
         }
     }
 
-    int packetContent = currentPacketId + 1000;
     std::array<char, 10> SendBuffer;
     char chrType = MessageType::STREAM_DATA_ACK & 0x0F;
 
@@ -169,6 +213,77 @@ void Stream::SendAcknowledgment() {
     socket.SendTo(endpointIp, endpointPort, std::span{SendBuffer.data(), SendBuffer.size()});
 
     currentPacketId++;
+}
+
+void Stream::HandleReliability(uint8_t LatestID, std::array<uint8_t, 4> History) {
+    std::vector<uint8_t> missingPackets;
+
+    //Check for missing packets based on the history
+    for (int i = 0; i < 32; i++) {
+        int byteIndex = i / 8;
+        int bitIndex = 7 - (i % 8); //Ensure the bits are read left to right
+
+        //If the bit is 0, packet wasn't received
+        if (!(History[byteIndex] & (1 << bitIndex))) {
+            int packetID = LatestID - i;
+
+            //Check if the packet was previously sent
+            if (previousData.find(packetID) != previousData.end()) {
+                missingPackets.push_back(packetID);
+            }
+        }
+    }
+
+    //Resend the packets
+    if (missingPackets.empty()) return;
+
+    std::cout << "Resending missing packets " << std::endl;
+    std::array<char, 65535> Buffer;
+
+    size_t offset = 0;
+
+    //Type of the message
+    char chrType = MessageType::STREAM_DATA & 0x0F;
+    memcpy(&Buffer[offset], &chrType, sizeof(chrType));
+    offset += sizeof(chrType);
+
+    //StreamID
+    memcpy(&Buffer[offset], &id, sizeof(id));
+    offset += sizeof(id);
+
+    //Number of packet sent
+    int numOfPacket = missingPackets.size();
+    memcpy(&Buffer[offset], &numOfPacket, sizeof(numOfPacket));
+    offset += sizeof(numOfPacket);
+int i = 0;
+    //Calculate the total size of the missing packets' data
+    for (uint8_t packetID: missingPackets) {
+        if (previousData.find(packetID) != previousData.end()) {
+            int packetData = previousData[packetID];
+            std::cout << "Loop # " << i << std::endl;
+            std::cout << "packetSize offset : " << offset << std::endl;
+            //Add the size of the packet (size of ID + PacketData)
+            size_t packetSize = sizeof(uint8_t) + sizeof(int);
+            memcpy(&Buffer[offset], &packetSize, sizeof(packetSize));
+            offset += sizeof(packetSize);
+            std::cout << "packetID offset : " << offset << std::endl;
+
+            //Add the ID
+            memcpy(&Buffer[offset], &packetID, sizeof(packetID));
+            offset += sizeof(packetID);
+            std::cout << "packetData offset : " << offset << std::endl;
+
+            //Add the data
+            memcpy(&Buffer[offset], &packetData, sizeof(packetData));
+            offset += sizeof(packetData);
+            std::cout << "Final loop offset : " << offset << std::endl;
+
+            i++;
+        }
+    }
+
+    //Send the packet
+    socket.SendTo(endpointIp, endpointPort, std::span{Buffer.data(), offset});
 }
 
 uint32_t Stream::GenerateId() {

@@ -160,7 +160,7 @@ int main() {
             if (doOnce) {
                 doOnce = false;
 
-                uint32_t id = falcon->CreateStream(false);
+                uint32_t id = falcon->CreateStream(true);
                 std::cout << "Stream Created : " << std::to_string(id) << std::endl;
                 ClientMessage messageTemp = ClientMessage(CurrentUUID);
                 std::array<char, 65535> SendBufferTemp;

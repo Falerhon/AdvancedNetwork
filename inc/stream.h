@@ -31,9 +31,11 @@ public:
 
     void SendData(std::span<const char> Data);
     void OnDataReceived(std::span<const char> Data);
-    void OnAcknowledgedReceived(std::span<const char> Data);
 
+    void OnAcknowledgedReceived(std::span<const char> Data);
     void SendAcknowledgment();
+
+    void HandleReliability(uint8_t LatestID, std::array<uint8_t, 4> History);
 
     uint32_t id;
 
