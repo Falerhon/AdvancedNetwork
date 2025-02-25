@@ -5,6 +5,8 @@
 #include <string>
 #include <span>
 
+#include "stream.h"
+
 void hello();
 
 #ifdef WIN32
@@ -24,6 +26,17 @@ enum MessageType {
     STREAM_CREATE_ACK,
     STREAM_DATA,
     STREAM_DATA_ACK,
+};
+
+//Use this struct to ease the creation and reading of messages
+struct Message {
+    int MessType;
+    std::array<char, 65535> Data;
+    virtual void readBuffer (std::array<char, 65535>& buff) = 0;
+    virtual void WriteBuffer (std::array<char, 65535>& buff) = 0;
+
+    Message () {};
+    virtual ~Message() = default;
 };
 
 #define TIMEOUTTIME 3
@@ -56,11 +69,21 @@ public:
     std::function<void()> serverDisconnectionHandler;
     std::function<void(uint64_t)> clientDisconnectionHandler;
 
+    //Client stream creation
+    uint32_t CreateStream(bool reliable);
+    //Server stream creation
+    uint32_t CreateStream(bool reliable, uint64_t clientId, std::string endpIp, int endpPort);
+    //Client stream creation from external request
+    uint32_t CreateStreamFromExternal(uint32_t id, bool reliable);
+    //Server stream creation from external request
+    uint32_t CreateStreamFromExternal(uint32_t id, uint64_t clientId, std::string endpIp, int endpPort, bool reliable);
 
 private:
     int SendToInternal(const std::string& to, uint16_t port, std::span<const char> message);
     int ReceiveFromInternal(std::string& from, std::span<char, 65535> message);
 
+    //Streams existing on this socket
+    std::map<uint32_t, std::unique_ptr<Stream>> existingStream;
 
 
     SocketType m_socket;

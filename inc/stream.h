@@ -6,16 +6,22 @@
 #ifndef STREAM_H
 #define STREAM_H
 
-#include <list>
-#include<string>
+#include <functional>
+#include <map>
+#include <string>
 #include<memory>
 #include<span>
 
+//Foward declare the falcon class
+class Falcon;
+
 class Stream {
 public:
-    static std::unique_ptr<Stream> CreateStream(uint64_t client, bool reliable); //Server API
+    static std::unique_ptr<Stream> CreateStream(uint64_t client, std::string endpIp, int endpPort, bool reliable, Falcon* socket); //Server API
+    static std::unique_ptr<Stream> CreateStreamExternal(uint32_t id, uint64_t client, std::string endpIp, int endpPort, bool reliable, Falcon* socket); //Server API
 
-    static std::unique_ptr<Stream> CreateStream(bool reliable, uint32_t id); //Client API
+    static std::unique_ptr<Stream> CreateStream(bool reliable, Falcon* socket); //Client API
+    static std::unique_ptr<Stream> CreateStreamExternal(uint32_t id, bool reliable, Falcon* socket); //Client API
 
     void CloseStream(const Stream& stream); //Server API
 
@@ -25,16 +31,19 @@ public:
     uint32_t id;
 
     static uint32_t GenerateId();
-    private:
-    //Server's current packet ID
-    //Client's last packet received
-    uint32_t currentPacketId = 0;
+private:
+    //Sender's current packet ID
+    uint8_t currentPacketId = 0;
     //Only needed on the server
     uint64_t linkedClient = 0;
+    std::string endpointIp  = "127.0.0.1";
+    int endpointPort = 5555;
     bool isReliable = false;
-    std::list<std::span<const char>> previousData;
+    //Past data so we can resend them
+    std::map<int, int> previousData;
 
-
+    //Socket this stream is linked to
+    Falcon* socket;
 
 };
 

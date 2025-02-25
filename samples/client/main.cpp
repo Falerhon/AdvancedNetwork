@@ -1,13 +1,30 @@
 #include <iostream>
 
 #include <falcon.h>
-
-#include "stream.h"
 #include "spdlog/spdlog.h"
+
+struct ClientMessage : Message {
+    uint64_t UserId;
+    ClientMessage (uint64_t userId): UserId(userId) {};
+
+    void readBuffer(std::array<char, 65535> &buff) override {
+        MessType = buff[0] & 0x0F;
+        if (!buff.size() <= 2) {
+            memcpy(&Data, &buff[1], buff.size() - 1);
+        }
+    };
+
+    void WriteBuffer(std::array<char, 65535> &buff) {
+        char chrType = MessType & 0x0F;
+        memcpy(&buff[0], &chrType, sizeof(chrType));
+        memcpy(&buff[1], &UserId, sizeof(uint64_t));
+        memcpy(&buff[9], &Data, Data.size());
+    }
+};
 
 uint64_t CurrentUUID = -1;
 
-void ComposeMessage(MessageType type, std::string& message);
+void ConnectToServer();
 void ConnectionEvent(bool success, uint64_t uuid);
 void Disconnection();
 
@@ -19,20 +36,14 @@ int main() {
     std::chrono::time_point<std::chrono::high_resolution_clock> lastPing = std::chrono::high_resolution_clock::now();
     std::chrono::time_point<std::chrono::high_resolution_clock> lastPing_ack = std::chrono::high_resolution_clock::now();
 
-    //Streams existing on this instance
-    std::vector<std::unique_ptr<Stream>> existingStream = {};
-
-    bool doOnce = false;
+    bool doOnce = true;
 
     falcon = Falcon::Connect("127.0.0.1", 5556);
     falcon->SetBlocking(false);
     falcon->OnConnectionEvent(ConnectionEvent);
     falcon->OnDisconnect(Disconnection);
     //Sending a connection request
-    std::string message;
-    ComposeMessage(CONNECT, message);
-    std::span data(message.data(), message.size());
-    falcon->SendTo("127.0.0.1", 5555, data);
+    ConnectToServer();
 
     std::string from_ip;
     from_ip.resize(255);
@@ -42,14 +53,14 @@ int main() {
         //Clearing the buffer
         buffer = {{}};
 
-        falcon->ReceiveFrom(from_ip, buffer);
+        int recv_size = falcon->ReceiveFrom(from_ip, buffer);
 
-        if (!buffer[0] == '\0') {
+        if (recv_size > 0) {
 
-            //Get the message type
-            int messageType = buffer[0] & 0x0F;
+            ClientMessage mess = ClientMessage(CurrentUUID);
+            mess.readBuffer(buffer);
 
-            switch (messageType) {
+            switch (mess.MessType) {
                 //Connection
                 case 0:
 
@@ -58,29 +69,27 @@ int main() {
                 case 1: {
                     uint64_t FoundUUID = -1;
                     bool success;
+                    //TODO : Make sure this works
+                    success = mess.Data[0];
 
-                    success = buffer[0]>>4 & 0x1;
-
-                    memcpy(&FoundUUID, &buffer[1], sizeof(uint64_t));
+                    memcpy(&FoundUUID, &buffer[2], sizeof(uint64_t));
 
                     falcon->clientConnectionHandler(success, FoundUUID);
-
-                    message.clear();
-                    message = "Connected!";
-                    ComposeMessage(CONNECT_ACK, message);
-                    falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
-
                 }
                 break;
                 //Disconnection
-                case 2:
-                    message.clear();
-                    ComposeMessage(DISCONNECT_ACK, message);
-                    falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+                case 2: {
+                    ClientMessage message = ClientMessage(CurrentUUID);
+                    std::array<char, 65535> SendBuffer;
+                    message.MessType = DISCONNECT_ACK;
+                    message.WriteBuffer(SendBuffer);
 
-                std::cout << "Server sent disconnection" << std::endl;
+                    falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
+
+                    std::cout << "Server sent disconnection" << std::endl;
                     falcon->serverDisconnectionHandler();
-                break;
+                    break;
+                }
                 //Disconnection_ACK
                 case 3:
                     std::cout << "Server acknowledged the disconnection" << std::endl;
@@ -109,15 +118,7 @@ int main() {
                     }catch(const std::invalid_argument& e){}
 
                     if (FoundStreamId != -1) {
-                        auto stream = Stream::CreateStream(false, FoundStreamId);
-                        auto streamId = stream->id;
-                        //Adding the stream
-                        existingStream.push_back(std::move(stream));
-                        //Preparing the stream created message
-                        message.clear();
-                        message = std::to_string(streamId);
-                        ComposeMessage(STREAM_CREATE_ACK, message);
-                        falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+                        //TODO : Stream creation
                     }
 
                     break;
@@ -136,30 +137,43 @@ int main() {
                     std::cout << "Acknowledged stream data" << std::endl;
                 break;
                 default:
-                    std::cout << "Unknown message type " << messageType << std::endl;
+                    std::cout << "Unknown message type " << mess.MessType << std::endl;
                 break;
             }
         }
 
         if (std::chrono::high_resolution_clock::now() - lastPing > std::chrono::seconds(PINGTIME)) {
             std::cout << "Sending ping to server" << std::endl;
-            std::string ping;
-            ComposeMessage(PING, ping);
-            falcon->SendTo("127.0.0.1", 5555, std::span {ping.data(), static_cast<unsigned long>(ping.length())});
+            ClientMessage message = ClientMessage(CurrentUUID);
+            std::array<char, 65535> SendBuffer;
+            message.MessType = PING;
+            message.WriteBuffer(SendBuffer);
+
+            falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
             lastPing = std::chrono::high_resolution_clock::now();
 
+            //TODO : MOVE THIS IN ANOTHER PLACE
             if (doOnce) {
                 doOnce = false;
-                message.clear();
-                //Ask the server to create the stream
-                ComposeMessage(STREAM_CREATE, message);
-                falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+
+                uint32_t id = falcon->CreateStream(false);
+                std::cout << "Stream Created : " << std::to_string(id) << std::endl;
+                ClientMessage messageTemp = ClientMessage(CurrentUUID);
+                std::array<char, 65535> SendBufferTemp;
+                message.MessType = STREAM_CREATE;
+                memcpy(&message.Data, &id, sizeof(id));
+                message.WriteBuffer(SendBufferTemp);
+
+                falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
             } else if (false){
-                message.clear();
-                message = std::to_string(existingStream[0]->id) + "Heya";
-                //Send data on the stream
-                ComposeMessage(STREAM_DATA, message);
-                falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+                ClientMessage messageTemp = ClientMessage(CurrentUUID);
+                std::array<char, 65535> SendBufferTemp;
+                message.MessType = STREAM_DATA;
+                std::string dataStr = "Heya";
+                memcpy(&message.Data, dataStr.data(), dataStr.size());
+                message.WriteBuffer(SendBuffer);
+
+                falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
             }
         }
 
@@ -168,10 +182,12 @@ int main() {
 
             //Telling the server we are disconnecting
             //Most likely won't reach the server
-            message.clear();
-            ComposeMessage(DISCONNECT, message);
-            falcon->SendTo("127.0.0.1", 5555, std::span {message.data(), static_cast<unsigned long>(message.length())});
+            ClientMessage messageTemp = ClientMessage(CurrentUUID);
+            std::array<char, 65535> SendBufferTemp;
+            messageTemp.MessType = DISCONNECT;
+            messageTemp.WriteBuffer(SendBufferTemp);
 
+            falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
             break;
         }
     }
@@ -180,14 +196,26 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-void ComposeMessage(MessageType type, std::string& message) {
-    message = std::to_string(type) + std::to_string(CurrentUUID) + message;
+void ConnectToServer() {
+    ClientMessage message = ClientMessage(CurrentUUID);
+    std::array<char, 65535> SendBuffer;
+    message.MessType = CONNECT;
+    message.WriteBuffer(SendBuffer);
+    std::string dataStr = "0";
+
+    //falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
+    falcon->SendTo("127.0.0.1", 5555, std::span{dataStr.data(), dataStr.length()});
 }
 
 void ConnectionEvent(bool success, uint64_t uuid) {
     if (success) {
         CurrentUUID = uuid;
-        std::cout << "Connection successful with UUID : " << CurrentUUID << std::endl;
+        ClientMessage message = ClientMessage(CurrentUUID);
+        std::array<char, 65535> SendBuffer;
+        message.MessType = CONNECT_ACK;
+        message.WriteBuffer(SendBuffer);
+
+        falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
     } else {
         std::cout << "Connection failed" << std::endl;
     }
