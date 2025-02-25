@@ -83,6 +83,7 @@ public:
     void HandleStreamData(uint32_t streamId, std::span<char, 65535> message);
     void SendStreamData(std::span<char, 65535> message, uint32_t streamId);
 
+    void HandleAcknowledgeData(uint32_t streamId, std::span<char, 65535> message);
 private:
     int SendToInternal(const std::string& to, uint16_t port, std::span<const char> message);
     int ReceiveFromInternal(std::string& from, std::span<char, 65535> message);

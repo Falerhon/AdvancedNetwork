@@ -136,6 +136,9 @@ int main() {
                 //StreamData_ACK
                 case 9:
                     std::cout << "Acknowledged stream data" << std::endl;
+                    uint32_t streamId;
+                    memcpy(&streamId, &buffer[1], sizeof(streamId));
+                    falcon->HandleAcknowledgeData(streamId, buffer);
                 break;
                 default:
                     std::cout << "Unknown message type " << mess.MessType << std::endl;

@@ -71,3 +71,11 @@ void Falcon::SendStreamData(std::span<char, 65535> message, uint32_t streamId) {
         printf("Stream ID not found");
     }
 }
+
+void Falcon::HandleAcknowledgeData(uint32_t streamId, std::span<char, 65535> message) {
+    if (existingStream.contains(streamId)) {
+        existingStream.find(streamId)->second->OnAcknowledgedReceived(message);
+    } else {
+        std::cout << "Stream ID not found : " << std::to_string(streamId) << std::endl;
+    }
+}

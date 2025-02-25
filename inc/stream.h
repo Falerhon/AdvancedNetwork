@@ -31,6 +31,9 @@ public:
 
     void SendData(std::span<const char> Data);
     void OnDataReceived(std::span<const char> Data);
+    void OnAcknowledgedReceived(std::span<const char> Data);
+
+    void SendAcknowledgment();
 
     uint32_t id;
 
@@ -45,6 +48,9 @@ private:
     bool isReliable = false;
     //Past data so we can resend them
     std::map<int, int> previousData;
+
+    //History of the 32 last packets received
+    std::vector<uint8_t> receivedPackets;
 
     //Socket this stream is linked to
     Falcon& socket;
