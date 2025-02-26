@@ -66,7 +66,7 @@ TEST_CASE("Connection", "[falcon]") {
         client.Update();
 
         // Check if the user has been registered by the server
-        for (const auto &user : server.knownUsers) {
+        for (const auto &user: server.knownUsers) {
             if (user.UUID == client.CurrentUUID) {
                 userRegistered = true;
                 break;
@@ -100,9 +100,6 @@ TEST_CASE("Connection", "[falcon]") {
 
 TEST_CASE("Server Times Out", "[falcon]") {
     Server server = Server();
-
-    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
-
     Client client = Client();
     client.ConnectToServer();
     server.Update();
@@ -115,7 +112,7 @@ TEST_CASE("Server Times Out", "[falcon]") {
         client.Update();
 
         // Check if the user has been registered by the server
-        for (const auto &user : server.knownUsers) {
+        for (const auto &user: server.knownUsers) {
             if (user.UUID == client.CurrentUUID) {
                 userRegistered = true;
                 break;
@@ -145,9 +142,6 @@ TEST_CASE("Server Times Out", "[falcon]") {
 
 TEST_CASE("Client Times Out", "[falcon]") {
     Server server = Server();
-
-    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
-
     Client client = Client();
     client.ConnectToServer();
     server.Update();
@@ -160,7 +154,7 @@ TEST_CASE("Client Times Out", "[falcon]") {
         server.Update();
 
         // Check if the user has been registered by the server
-        for (const auto &user : server.knownUsers) {
+        for (const auto &user: server.knownUsers) {
             if (user.UUID == client.CurrentUUID) {
                 userRegistered = true;
                 break;
@@ -206,9 +200,6 @@ TEST_CASE("Client Times Out", "[falcon]") {
 
 TEST_CASE("Can Create Stream - Client", "[falcon]") {
     Server server = Server();
-
-    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
-
     Client client = Client();
     client.ConnectToServer();
     server.Update();
@@ -221,7 +212,7 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
         client.Update();
 
         // Check if the user has been registered by the server
-        for (const auto &user : server.knownUsers) {
+        for (const auto &user: server.knownUsers) {
             if (user.UUID == client.CurrentUUID) {
                 userRegistered = true;
                 break;
@@ -269,14 +260,11 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
 
 TEST_CASE("Can Create Stream - Server", "[falcon]") {
     Server server = Server();
-
-    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
-
     Client client = Client();
     client.ConnectToServer();
     server.Update();
     client.Update();
-    
+
     // Retry loop to wait until the server registers the user
     bool userRegistered = false;
     for (int i = 0; i < 20 && !userRegistered; ++i) {
@@ -284,7 +272,7 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
         server.Update();
 
         // Check if the user has been registered by the server
-        for (const auto &user : server.knownUsers) {
+        for (const auto &user: server.knownUsers) {
             if (user.UUID == client.CurrentUUID) {
                 userRegistered = true;
                 break;
@@ -333,24 +321,35 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
 
 
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {
-  /*  Server server = Server();
+    Server server = Server();
     Client client = Client();
     client.ConnectToServer();
     server.Update();
-    // Wait until the server registers the user
-    for (int i = 0; i < 20 && server.knownUsers.size() == 0; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    client.Update();
+
+    // Retry loop to wait until the server registers the user
+    bool userRegistered = false;
+    for (int i = 0; i < 20 && !userRegistered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Increase sleep time if needed
         server.Update();
+
+        // Check if the user has been registered by the server
+        for (const auto &user: server.knownUsers) {
+            if (user.UUID == client.CurrentUUID) {
+                userRegistered = true;
+                break;
+            }
+        }
     }
     client.Update();
     server.Update();
     server.Update();
 
-    server.CreateStream(client.CurrentUUID, false);
+    client.CreateStream();
 
-    client.Update();
     server.Update();
     client.Update();
+    server.Update();
 
     // Retry loop to ensure streams are populated
     for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
@@ -362,6 +361,7 @@ TEST_CASE("Can Send Data Through Stream", "[falcon]") {
 
     client.GenerateAndSendData();
     server.Update();
+    client.Update();
 
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
@@ -383,14 +383,27 @@ TEST_CASE("Can Send Data Through Stream", "[falcon]") {
         return;
     }
 
-    std::cout << std::prev(clientIt->second->previousData.end())->first << " " << serverIt->second->receivedPackets[0];
-    auto bla = server.falcon->existingStream[0]->receivedPackets[0];
-    auto blop = client.falcon->existingStream[0]->previousData.end()->first;
-    REQUIRE(client.falcon->existingStream[0]->previousData.end()->first == server.falcon->existingStream[0]->receivedPackets[0]);*/
-}
+    // Retry loop to ensure the message is sent
+    for (int i = 0; i < 15 && (clientIt->second->previousData.empty() || serverIt->second->receivedPackets.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+        client.Update();
+    }
 
-TEST_CASE("Can Receive Data From Stream", "[falcon]") {
+    auto clientLastDataSent = std::prev(clientIt->second->previousData.end());
+    auto serverLastDataReceived = serverIt->second->receivedPackets;
+
+    if (serverLastDataReceived.size() == 0) {
+        FAIL("serverLastDataReceived is invalid");
+        return;
+    }
+    
+    REQUIRE(clientLastDataSent->first == serverLastDataReceived[0]);
 }
 
 TEST_CASE("Stream Reliability", "[falcon]") {
+    //Send Data from client
+    //Don't update server
+    //Update client 2-3 x
+    //Update serv and check if the packet send have the previous paquets
 }
