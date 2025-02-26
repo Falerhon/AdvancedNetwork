@@ -135,6 +135,18 @@ int Falcon::ReceiveFromInternal(std::string &from, std::span<char, 65535> messag
 }
 
 void Falcon::SetBlocking(bool block) {
-    int blocking = (block) ? 0 : 1;
-    fcntl(m_socket, F_SETFL, blocking);
+    int flags = fcntl(m_socket, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl get");
+        return;
+    }
+
+    if (block)
+        flags &= ~O_NONBLOCK;  // Clear O_NONBLOCK to make it blocking
+    else
+        flags |= O_NONBLOCK;   // Set O_NONBLOCK to make it non-blocking
+
+    if (fcntl(m_socket, F_SETFL, flags) == -1) {
+        perror("fcntl set");
+    }
 }

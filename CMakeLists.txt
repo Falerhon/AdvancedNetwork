@@ -21,11 +21,6 @@ if(WIN32)
     target_link_libraries(falcon PRIVATE ${WINDOWS_LIBS})
 endif()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-fsanitize=address -g -O1 -fno-omit-frame-pointer)
-    add_link_options(-fsanitize=address)
-endif()
-
 add_subdirectory(externals)
 add_subdirectory(samples)
 add_subdirectory(tests)
