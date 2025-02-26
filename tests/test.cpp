@@ -94,6 +94,25 @@ TEST_CASE("Connection", "[falcon]") {
     REQUIRE(ping != newPing);
 }
 
+TEST_CASE("Server Times Out", "[falcon]") {
+    Server server = Server();
+    Client client = Client();
+
+    client.ConnectToServer();
+    server.Update();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    client.Update();
+
+    // Check if the user was successfully registered
+    REQUIRE(client.IsConnected == true);
+
+    std::this_thread::sleep_for(std::chrono::seconds(11));
+    client.Update();
+
+    // Check if the user was timed-out
+    REQUIRE(client.IsConnected == false);
+}
+
 TEST_CASE("Client Times Out", "[falcon]") {
     Server server = Server();
     Client client = Client();
@@ -128,6 +147,7 @@ TEST_CASE("Client Times Out", "[falcon]") {
     // Check if the user was timed-out
     REQUIRE(userFound == false);
 }
+
 
 TEST_CASE("Can Create Stream - Server", "[falcon]") {
 }

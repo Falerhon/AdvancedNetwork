@@ -29,6 +29,8 @@ public:
       Client();
 
     uint64_t CurrentUUID = -1;
+    bool IsConnected = false;
+
     std::chrono::time_point<std::chrono::high_resolution_clock> lastPing;
     std::chrono::time_point<std::chrono::high_resolution_clock> lastPing_ack;
 

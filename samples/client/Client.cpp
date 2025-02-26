@@ -154,6 +154,7 @@ void Client::ConnectionEvent(bool success, uint64_t uuid) {
         std::array<char, 65535> SendBuffer;
         message.MessType = CONNECT_ACK;
         message.WriteBuffer(SendBuffer);
+        IsConnected = true;
 
         falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
     } else {
@@ -163,7 +164,7 @@ void Client::ConnectionEvent(bool success, uint64_t uuid) {
 
 void Client::Disconnection() {
     std::cout << "Lost connection with the server" << std::endl;
-    exit(0);
+    IsConnected = false;
 }
 
 void Client::PingServer() {
