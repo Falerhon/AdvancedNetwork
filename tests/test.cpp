@@ -114,7 +114,13 @@ TEST_CASE("Server Times Out", "[falcon]") {
     // Check if the user was successfully registered
     REQUIRE(client.IsConnected == true);
 
-    std::this_thread::sleep_for(std::chrono::seconds(11));
+    // Measure elapsed time to ensure at least 11 seconds of inactivity
+    //Have to do this that way so MacOS can synch correctly
+    auto start = std::chrono::steady_clock::now();
+    while (std::chrono::steady_clock::now() - start < std::chrono::seconds(11)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Small sleep to avoid busy-waiting
+    }
+
     client.Update();
 
     // Check if the user was timed-out
@@ -141,7 +147,11 @@ TEST_CASE("Client Times Out", "[falcon]") {
     // Check if the user was successfully registered
     REQUIRE(userFound == true);
 
-    std::this_thread::sleep_for(std::chrono::seconds(11));
+    // Measure elapsed time to ensure at least 11 seconds of inactivity
+    auto start = std::chrono::steady_clock::now();
+    while (std::chrono::steady_clock::now() - start < std::chrono::seconds(11)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Small sleep to avoid busy-waiting
+    }
     server.Update();
 
     userFound = false;
