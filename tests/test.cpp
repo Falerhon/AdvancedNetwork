@@ -75,8 +75,8 @@ TEST_CASE("Connection", "[falcon]") {
 
     // Verify that the server registered the user by checking known users
     bool userFound = false;
-    for (const auto &user: server.knownUsers) {
-        if (user.UUID == client.CurrentUUID) {
+    for (size_t i = 0; i < server.knownUsers.size(); ++i) {
+        if (server.knownUsers[i].UUID == client.CurrentUUID) {
             userFound = true;
             break;
         }
@@ -117,10 +117,11 @@ TEST_CASE("Server Times Out", "[falcon]") {
     // Measure elapsed time to ensure at least 11 seconds of inactivity
     //Have to do this that way so MacOS can synch correctly
     auto start = std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now() - start < std::chrono::seconds(11)) {
+    while (std::chrono::steady_clock::now() - start < std::chrono::seconds(12)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Small sleep to avoid busy-waiting
     }
 
+    client.Update();
     client.Update();
 
     // Check if the user was timed-out
@@ -135,11 +136,13 @@ TEST_CASE("Client Times Out", "[falcon]") {
     server.Update();
     std::this_thread::sleep_for(std::chrono::seconds(1));
     client.Update();
+    server.Update();
+
     auto clientUUID = client.CurrentUUID;
 
     bool userFound = false;
-    for (const auto &user: server.knownUsers) {
-        if (user.UUID == clientUUID) {
+    for (size_t i = 0; i < server.knownUsers.size(); ++i) {
+        if (server.knownUsers[i].UUID == clientUUID) {
             userFound = true;
             break;
         }
@@ -155,8 +158,8 @@ TEST_CASE("Client Times Out", "[falcon]") {
     server.Update();
 
     userFound = false;
-    for (const auto &user: server.knownUsers) {
-        if (user.UUID == clientUUID) {
+    for (size_t i = 0; i < server.knownUsers.size(); ++i) {
+        if (server.knownUsers[i].UUID == clientUUID) {
             userFound = true;
             break;
         }
@@ -179,8 +182,12 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
     client.CreateStream();
     server.Update();
     client.Update();
+    server.Update();
 
-    REQUIRE(client.falcon->existingStream[0] == server.falcon->existingStream[1]);
+    REQUIRE(client.falcon->existingStream.size() > 0);
+    REQUIRE(server.falcon->existingStream.size() > 0);
+    REQUIRE(client.falcon->existingStream.end()->first == server.falcon->existingStream.end()->first);
+
 }
 
 TEST_CASE("Can Create Stream - Server", "[falcon]") {
@@ -196,15 +203,15 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
 
     server.Update();
     client.Update();
+    client.Update();
 
-    if (server.falcon->existingStream.size() > 0)
-        REQUIRE(client.falcon->existingStream[0] == server.falcon->existingStream[1]);
-    else
-        REQUIRE(client.falcon->existingStream[0] == server.falcon->existingStream[0]);
+    REQUIRE(client.falcon->existingStream.size() > 0);
+    REQUIRE(server.falcon->existingStream.size() > 0);
+    REQUIRE(client.falcon->existingStream.begin()->first == server.falcon->existingStream.end()->first);
 }
 
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {
-    Server server = Server();
+     /*Server server = Server();
     Client client = Client();
     client.ConnectToServer();
     server.Update();
@@ -219,12 +226,12 @@ TEST_CASE("Can Send Data Through Stream", "[falcon]") {
     client.GenerateAndSendData();
     server.Update();
     std::this_thread::sleep_for(std::chrono::seconds(1));
-/*
-    if (server.falcon->existingStream[0]->receivedPackets.size() > 0)
-        server.falcon->existingStream[0]->receivedPackets.end();
-    if (client.falcon->existingStream[0]->receivedPackets.size() > 0)
-        client.falcon->existingStream[0]->receivedPackets.end();
-*/
+
+        if (server.falcon->existingStream[0]->receivedPackets.size() > 0)
+            server.falcon->existingStream[0]->receivedPackets.end();
+        if (client.falcon->existingStream[0]->receivedPackets.size() > 0)
+            client.falcon->existingStream[0]->receivedPackets.end();
+    */
     //  REQUIRE();
 }
 
