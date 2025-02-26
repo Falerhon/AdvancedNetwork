@@ -2,6 +2,7 @@
 #define CLIENT_H
 
 #include <chrono>
+#include <cstring>
 #include <falcon.h>
 
 struct ClientMessage : Message {

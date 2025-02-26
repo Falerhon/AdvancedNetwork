@@ -95,18 +95,44 @@ TEST_CASE("Connection", "[falcon]") {
 }
 
 TEST_CASE("Client Times Out", "[falcon]") {
+    Server server = Server();
+    Client client = Client();
+
+    client.ConnectToServer();
+    server.Update();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    client.Update();
+    auto clientUUID = client.CurrentUUID;
+
+    bool userFound = false;
+    for (const auto &user: server.knownUsers) {
+        if (user.UUID == clientUUID) {
+            userFound = true;
+            break;
+        }
+    }
+    // Check if the user was successfully registered
+    REQUIRE(userFound == true);
+
+    std::this_thread::sleep_for(std::chrono::seconds(11));
+    server.Update();
+
+    userFound = false;
+    for (const auto &user: server.knownUsers) {
+        if (user.UUID == clientUUID) {
+            userFound = true;
+            break;
+        }
+    }
+
+    // Check if the user was timed-out
+    REQUIRE(userFound == false);
 }
 
 TEST_CASE("Can Create Stream - Server", "[falcon]") {
 }
 
 TEST_CASE("Can Create Stream - Client", "[falcon]") {
-}
-
-TEST_CASE("Can Create Stream From External - Server", "[falcon]") {
-}
-
-TEST_CASE("Can Create Stream From External - Client", "[falcon]") {
 }
 
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {

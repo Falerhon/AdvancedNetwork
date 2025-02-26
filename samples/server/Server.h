@@ -1,4 +1,5 @@
 ﻿#include <Falcon.h>
+#include <cstring>
 #include <chrono>
 
 #ifndef SERVER_H
