@@ -22,6 +22,11 @@ Server::Server() {
     falcon->OnClientDisconnected([this](uint64_t uuid) {
         this->ClientDisconnected(uuid);
     });
+
+    knownUsers.reserve(50); //Reserve space for 50 clients
+}
+
+Server::~Server() {
 }
 
 void Server::Update() {
@@ -182,7 +187,9 @@ void Server::ClientDisconnected(uint64_t UUID) {
     }
 }
 
-void Server::CreateStream(bool isReliable) {
+void Server::CreateStream(uint64_t UUID, bool isReliable) {
+    const auto it = std::find(knownUsers.begin(), knownUsers.end(), UUID);
+    if (it != knownUsers.end()) {
         ServerMessage message = ServerMessage();
         uint32_t id = falcon->CreateStream(isReliable);
         std::cout << "Stream Created : " << std::to_string(id) << std::endl;
@@ -192,7 +199,8 @@ void Server::CreateStream(bool isReliable) {
         memcpy(&message.Data, &id, sizeof(id));
         message.WriteBuffer(SendBufferTemp);
 
-        falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
+        falcon->SendTo(it->address, it->port, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
+    }
 }
 
 void Server::HandleConnection(const ServerMessage &mess, std::string &ip, uint16_t &port) {

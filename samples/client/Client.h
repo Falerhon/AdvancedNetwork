@@ -7,7 +7,9 @@
 
 struct ClientMessage : Message {
     uint64_t UserId;
-    ClientMessage (uint64_t userId): UserId(userId) {};
+
+    ClientMessage(uint64_t userId): UserId(userId) {
+    };
 
     void readBuffer(std::array<char, 65535> &buff) override {
         MessType = buff[0] & 0x0F;
@@ -26,7 +28,17 @@ struct ClientMessage : Message {
 
 class Client {
 public:
-      Client();
+    Client();
+
+    ~Client();
+
+    Client(const Client &) = default;
+
+    Client &operator=(const Client &) = default;
+
+    Client(Client &&) = default;
+
+    Client &operator=(Client &&) = default;
 
     uint64_t CurrentUUID = -1;
 
@@ -38,29 +50,38 @@ public:
     void Update();
 
     void ConnectToServer();
+
     void ConnectionEvent(bool success, uint64_t uuid);
+
     void Disconnection();
 
     void PingServer();
+
     void CreateStream();
+
     void GenerateAndSendData();
 
     //Handling of the packet according to their type
     void HandleConnection_ACK(const ClientMessage &mess);
+
     void HandleDisconnection(const ClientMessage &mess);
+
     void HandleDisconnection_ACK(const ClientMessage &mess);
+
     void HandlePing(const ClientMessage &mess);
+
     void HandlePing_ACK(const ClientMessage &mess);
+
     void HandleStreamCreate(const ClientMessage &mess);
+
     void HandleStreamCreate_ACK(const ClientMessage &mess);
+
     void HandleStreamData(std::array<char, 65535> &recieveBuffer);
+
     void HandleStreamData_ACK(std::array<char, 65535> &recieveBuffer);
 
     std::unique_ptr<Falcon> falcon;
-
-
 };
-
 
 
 #endif //CLIENT_H

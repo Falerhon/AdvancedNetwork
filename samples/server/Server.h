@@ -42,6 +42,16 @@ class Server {
   public:
     Server();
 
+    ~Server();
+
+    Server(const Server &) = default;
+
+    Server &operator=(const Server &) = default;
+
+    Server(Server &&) = default;
+
+    Server &operator=(Server &&) = default;
+
     void Update();
 
     uint64_t RegisterUser(std::string &address, uint16_t &port);
@@ -52,7 +62,7 @@ class Server {
 
     void ClientDisconnected(uint64_t UUID);
 
-    void CreateStream(bool isReliable);
+    void CreateStream(uint64_t UUID, bool isReliable);
 
     void CheckTimeout();
 

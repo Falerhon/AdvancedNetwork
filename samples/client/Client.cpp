@@ -24,6 +24,9 @@ Client::Client() {
     client_from_ip.resize(255);
 }
 
+Client::~Client() {
+}
+
 void Client::Update() {
         //Clearing the buffer
         buffer = {{}};

@@ -165,7 +165,7 @@ void Stream::OnAcknowledgedReceived(std::span<const char> Data) {
     memcpy(&recId, &Data[6], sizeof(recId));
 
     std::array<uint8_t, 4> history;
-    memcpy(&history, &Data[7], sizeof(history));
+    memcpy(&history, &Data[7], history.size());
 
 
     // Convert history to bitset for easy visualization
