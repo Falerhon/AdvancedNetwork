@@ -201,6 +201,13 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
     client.Update();
     server.Update();
 
+    // Retry loop to ensure streams are populated
+    for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        client.Update();
+        server.Update();
+    }
+
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
 
@@ -244,6 +251,13 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
     server.Update();
     client.Update();
 
+    // Retry loop to ensure streams are populated
+    for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+        client.Update();
+    }
+
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
 
@@ -269,28 +283,49 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
 
 
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {
-    /*Server server = Server();
-   Client client = Client();
-   client.ConnectToServer();
-   server.Update();
-   std::this_thread::sleep_for(std::chrono::seconds(1));
-   client.Update();
-   server.Update();
+   /* Server server = Server();
+    Client client = Client();
+    client.ConnectToServer();
+    server.Update();
+    // Wait until the server registers the user
+    for (int i = 0; i < 15 && server.knownUsers.size() == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+    }
+    client.Update();
+    server.Update();
+    server.Update();
 
-   client.CreateStream();
-   server.Update();
-   client.Update();
+    server.CreateStream(client.CurrentUUID, false);
+
+    client.Update();
+    server.Update();
+    client.Update();
 
    client.GenerateAndSendData();
    server.Update();
-   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-       if (server.falcon->existingStream[0]->receivedPackets.size() > 0)
-           server.falcon->existingStream[0]->receivedPackets.end();
-       if (client.falcon->existingStream[0]->receivedPackets.size() > 0)
-           client.falcon->existingStream[0]->receivedPackets.end();
-   */
-    //  REQUIRE();
+    REQUIRE(client.falcon->existingStream.size() > 0);
+    REQUIRE(server.falcon->existingStream.size() > 0);
+
+    if (client.falcon->existingStream.empty()) {
+        FAIL("client.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+    if (server.falcon->existingStream.empty()) {
+        FAIL("server.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+
+    auto clientIt = client.falcon->existingStream.begin();
+    auto serverIt = std::prev(server.falcon->existingStream.end());
+
+    if (!clientIt->second || !serverIt->second) {
+        FAIL("clientIt or serverIt is nullptr");
+        return;
+    }
+
+   client.falcon->existingStream[0]->previousData.end()->first == server.falcon->existingStream[0]->receivedPackets[0];*/
 }
 
 TEST_CASE("Can Receive Data From Stream", "[falcon]") {
