@@ -41,13 +41,23 @@ struct ServerMessage : Message {
 //List of known users
 std::vector<User> knownUsers;
 
+//Function declaration
 uint64_t RegisterUser(std::string &address, uint16_t &port);
-
 void ConnectionConfirmation(uint64_t UUID);
-
 std::vector<uint64_t> CheckPing();
-
 void ClientDisconnected(uint64_t UUID);
+void CheckTimeout();
+//Handling of the packet according to their type
+void HandleConnection(const ServerMessage &mess, std::string &ip, uint16_t &port);
+void HandleConnection_ACK(const ServerMessage &mess);
+void HandleDisconnection(const ServerMessage &mess);
+void HandleDisconnection_ACK(const ServerMessage &mess);
+void HandlePing(const ServerMessage &mess);
+void HandlePing_ACK(const ServerMessage &mess);
+void HandleStreamCreate(const ServerMessage &mess);
+void HandleStreamCreate_ACK(const ServerMessage &mess);
+void HandleStreamData(std::array<char, 65535> &recieveBuffer);
+void HandleStreamData_ACK(std::array<char, 65535> &recieveBuffer);
 
 std::unique_ptr<Falcon> falcon;
 
@@ -55,7 +65,6 @@ int main() {
     spdlog::set_level(spdlog::level::debug);
     spdlog::debug("Hello World!");
     //Users to remove from known users
-    std::vector<uint64_t> UsersToDisconnect;
 
     falcon = Falcon::Listen("127.0.0.1", 5555);
     falcon->SetBlocking(false);
@@ -92,107 +101,49 @@ int main() {
 
             switch (mess.MessType) {
                 //Connection
-                case 0: {
-                    //Check if user is known
-                    if (std::find(knownUsers.begin(), knownUsers.end(), mess.UserId) == knownUsers.end()) {
-                        uint64_t NewUUID = RegisterUser(ip, port);
-
-                        std::cout << "New user id : " << NewUUID << std::endl;
-
-                        falcon->serverConnectionHandler(NewUUID);
-                    } else {
-                        std::cout << "User id is present : " << mess.UserId << std::endl;
-                    }
-                }
-                break;
+                case 0:
+                    HandleConnection(mess, ip, port);
+                    break;
                 //Connectio_ACK
                 case 1:
-                    std::cout << "Client connection confirmed " << mess.Data.data() << std::endl;
+                    HandleConnection_ACK(mess);
                     break;
                 //Disconnection
                 case 2: {
-                    std::cout << "Client sent disconnection : " << mess.UserId << std::endl;
-
-                    ServerMessage message = ServerMessage();
-                    message.MessType = DISCONNECT_ACK;
-                    std::array<char, 65535> SendBuffer;
-
-                    message.WriteBuffer(SendBuffer);
-                    falcon->SendTo(
-                        ip, port, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
-
-                    falcon->clientDisconnectionHandler(mess.UserId);
-
+                    HandleDisconnection(mess);
                     break;
                 }
                 //Disconnection_ACK
                 case 3:
-                    std::cout << "Client acknowledged disconnection" << std::endl;
-
-                    falcon->clientDisconnectionHandler(mess.UserId);
+                    HandleDisconnection_ACK(mess);
                     break;
                 //Ping
                 case 4: {
-                    //Find the sending user
-                    const auto it = std::find(knownUsers.begin(), knownUsers.end(), mess.UserId);
-                    if (it == knownUsers.end()) {
-                        std::cout << "Unknown user tried to ping" << std::endl;
-                    } else {
-                        //For debug purposes
-                        //std::cout << SearchedUUID <<" sent a ping" << std::endl;
-                        it->lastPing = std::chrono::high_resolution_clock::now();
-
-                        ServerMessage message = ServerMessage();
-                        message.MessType = PING_ACK;
-                        std::array<char, 65535> SendBuffer;
-
-                        message.WriteBuffer(SendBuffer);
-                        falcon->SendTo(
-                            ip, port, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
-                    }
+                    HandlePing(mess);
                     break;
                 }
                 //Ping_ACK
                 case 5:
-                    std::cout << "Not implemented yet" << std::endl;
+                    std::cout << "Ping Acknowledged" << std::endl;
                     break;
                 //StreamCreate
                 case 6: {
-                    const auto it = std::find(knownUsers.begin(), knownUsers.end(), mess.UserId);
-                    if (it == knownUsers.end()) {
-                        std::cout << "Unknown user tried to create stream" << std::endl;
-                    } else {
-                        uint32_t id;
-                        memcpy(&id, &mess.Data[0], sizeof(id));
-                        uint32_t idCreated = falcon->CreateStreamFromExternal(id, it->UUID, it->address, it->port, true);
-                        std::cout << "Stream Created : " << std::to_string(idCreated) << std::endl;
-                    }
+                    HandleStreamCreate(mess);
                     break;
                 }
                 //Stream_Create_ACK
                 case 7:
+                    HandleStreamCreate_ACK(mess);
 
-                    std::cout << "Stream creation acknowledged! : " << recieveBuffer.data() << std::endl;
                     break;
                 //Stream_Data
                 case 8: {
-                    int random = rand() % 101;
-                    if (random > 50) {
-                        //std::cout << "Recieving stream data" << mess.Data.data() << std::endl;
-                        //TODO : STREAM READING DATA
-                        uint32_t streamId;
-                        memcpy(&streamId, &recieveBuffer[1], sizeof(streamId));
-                        falcon->HandleStreamData(streamId, recieveBuffer);
-                    }
-
+                    HandleStreamData(recieveBuffer);
                     break;
                 }
                 //Stream_Data_ACK
                 case 9:
-                    std::cout << "Stream data acknowledged" << std::endl;
-                    uint32_t streamId;
-                    memcpy(&streamId, &recieveBuffer[1], sizeof(streamId));
-                    falcon->HandleAcknowledgeData(streamId, recieveBuffer);
+                    HandleStreamData_ACK(recieveBuffer);
                     break;
                 default:
                     std::cout << "Unknown message type " << messageType << std::endl;
@@ -201,23 +152,7 @@ int main() {
             //Clean up the message
             mess.~ServerMessage();
         }
-        //Disconnect timed out user
-        UsersToDisconnect = CheckPing();
-        if (UsersToDisconnect.size() > 0) {
-            for (auto user: UsersToDisconnect) {
-                falcon->clientDisconnectionHandler(user);
-                //Telling the client we are disconnecting them
-                //Most likely won't reach the client
-                ServerMessage message = ServerMessage();
-                message.MessType = DISCONNECT;
-                std::array<char, 65535> SendBuffer;
-
-                message.WriteBuffer(SendBuffer);
-
-                falcon->SendTo(
-                    ip, port, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
-            }
-        }
+        CheckTimeout();
     }
 
 
@@ -265,6 +200,17 @@ void ConnectionConfirmation(uint64_t UUID) {
     falcon->SendTo(it->address, it->port, std::span{sendBuffer.data(), static_cast<unsigned long>(std::strlen(sendBuffer.data()))});
 }
 
+void CheckTimeout() {
+    //Disconnect timed out user
+    std::vector<uint64_t> UsersToDisconnect = CheckPing();
+    if (!UsersToDisconnect.empty()) {
+        for (auto user: UsersToDisconnect) {
+            falcon->clientDisconnectionHandler(user);
+        }
+    }
+}
+
+
 std::vector<uint64_t> CheckPing() {
     std::vector<uint64_t> TimedOutUsers;
     for (const auto &user: knownUsers) {
@@ -279,6 +225,97 @@ std::vector<uint64_t> CheckPing() {
 void ClientDisconnected(uint64_t UUID) {
     const auto it = std::find(knownUsers.begin(), knownUsers.end(), UUID);
     if (it != knownUsers.end()) {
+        ServerMessage message = ServerMessage();
+        message.MessType = DISCONNECT;
+        std::array<char, 65535> SendBuffer;
+
+        message.WriteBuffer(SendBuffer);
+        falcon->SendTo(
+            it->address, it->port, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
+
         knownUsers.erase(it);
     }
+}
+
+void HandleConnection(const ServerMessage &mess, std::string &ip, uint16_t &port) {
+    //Check if user is known
+    if (std::find(knownUsers.begin(), knownUsers.end(), mess.UserId) == knownUsers.end()) {
+        uint64_t NewUUID = RegisterUser(ip, port);
+
+        std::cout << "New user id : " << NewUUID << std::endl;
+
+        falcon->serverConnectionHandler(NewUUID);
+    } else {
+        std::cout << "User id is present : " << mess.UserId << std::endl;
+    }
+}
+
+void HandleConnection_ACK(const ServerMessage &mess) {
+    std::cout << "Client connection confirmed " << mess.Data.data() << std::endl;
+}
+void HandleDisconnection(const ServerMessage &mess) {
+    std::cout << "Client sent disconnection : " << mess.UserId << std::endl;
+
+    falcon->clientDisconnectionHandler(mess.UserId);
+}
+
+void HandleDisconnection_ACK(const ServerMessage &mess) {
+    std::cout << "Client acknowledged disconnection" << std::endl;
+}
+
+void HandlePing(const ServerMessage &mess) {
+    //Find the sending user
+    const auto it = std::find(knownUsers.begin(), knownUsers.end(), mess.UserId);
+    if (it == knownUsers.end()) {
+        std::cout << "Unknown user tried to ping" << std::endl;
+    } else {
+        //For debug purposes
+        //std::cout << SearchedUUID <<" sent a ping" << std::endl;
+        it->lastPing = std::chrono::high_resolution_clock::now();
+
+        ServerMessage message = ServerMessage();
+        message.MessType = PING_ACK;
+        std::array<char, 65535> SendBuffer;
+
+        message.WriteBuffer(SendBuffer);
+        falcon->SendTo(
+            it->address, it->port, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
+    }
+}
+
+void HandlePing_ACK(const ServerMessage &mess) {
+
+}
+
+void HandleStreamCreate(const ServerMessage &mess) {
+    const auto it = std::find(knownUsers.begin(), knownUsers.end(), mess.UserId);
+    if (it == knownUsers.end()) {
+        std::cout << "Unknown user tried to create stream" << std::endl;
+    } else {
+        uint32_t id;
+        memcpy(&id, &mess.Data[0], sizeof(id));
+        uint32_t idCreated = falcon->CreateStreamFromExternal(id, it->UUID, it->address, it->port, true);
+        std::cout << "Stream Created : " << std::to_string(idCreated) << std::endl;
+    }
+}
+
+void HandleStreamCreate_ACK(const ServerMessage &mess) {
+    std::cout << "Stream creation acknowledged! : " << mess.Data.data() << std::endl;
+}
+
+void HandleStreamData(std::array<char, 65535> &recieveBuffer) {
+    int random = rand() % 101;
+    if (random > 50) {
+        //std::cout << "Recieving stream data" << mess.Data.data() << std::endl;
+        uint32_t streamId;
+        memcpy(&streamId, &recieveBuffer[1], sizeof(streamId));
+        falcon->HandleStreamData(streamId, recieveBuffer);
+    }
+}
+
+void HandleStreamData_ACK(std::array<char, 65535> &recieveBuffer) {
+    std::cout << "Stream data acknowledged" << std::endl;
+    uint32_t streamId;
+    memcpy(&streamId, &recieveBuffer[1], sizeof(streamId));
+    falcon->HandleAcknowledgeData(streamId, recieveBuffer);
 }
