@@ -6,7 +6,7 @@
 
 #include <memory>
 #include <fmt/core.h>
-
+#include <cstring>
 #include <algorithm>
 
 #include "falcon.h"

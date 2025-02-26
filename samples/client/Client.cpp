@@ -1,7 +1,7 @@
 ﻿#include "spdlog/spdlog.h"
 #include "Client.h"
 
-std::string from_ip;
+std::string client_from_ip;
 std::array<char, 65535> buffer;
 uint32_t streamId = -1;
 bool doOnce = true;
@@ -21,17 +21,14 @@ Client::Client() {
         this->Disconnection();
     });
 
-    //Sending a connection request
-    ConnectToServer();
-
-    from_ip.resize(255);
+    client_from_ip.resize(255);
 }
 
 void Client::Update() {
         //Clearing the buffer
         buffer = {{}};
 
-        int recv_size = falcon->ReceiveFrom(from_ip, buffer);
+        int recv_size = falcon->ReceiveFrom(client_from_ip, buffer);
 
         if (recv_size > 0) {
 
@@ -63,7 +60,7 @@ void Client::Update() {
                 break;
                 //Ping_ACK
                 case 5:
-                    //std::cout << "Ping acknowledged" << std::endl;
+                    std::cout << "Ping acknowledged" << std::endl;
                     HandlePing_ACK(mess);
                 break;
                 //StreamCreate
@@ -167,6 +164,19 @@ void Client::ConnectionEvent(bool success, uint64_t uuid) {
 void Client::Disconnection() {
     std::cout << "Lost connection with the server" << std::endl;
     exit(0);
+}
+
+void Client::PingServer() {
+    if (std::chrono::high_resolution_clock::now() - lastPing > std::chrono::seconds(PINGTIME)) {
+        std::cout << "Client pinging server" << std::endl;
+        ClientMessage message = ClientMessage(CurrentUUID);
+        std::array<char, 65535> SendBuffer;
+        message.MessType = PING;
+        message.WriteBuffer(SendBuffer);
+
+        falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
+        lastPing = std::chrono::high_resolution_clock::now();
+    }
 }
 
 void Client::HandleConnection_ACK(const ClientMessage &mess) {

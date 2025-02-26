@@ -41,7 +41,7 @@ struct Message {
     virtual ~Message() = default;
 };
 
-#define TIMEOUTTIME 3
+#define TIMEOUTTIME 10
 #define PINGTIME 1
 
 class Falcon {

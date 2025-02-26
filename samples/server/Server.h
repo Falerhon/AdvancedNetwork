@@ -75,6 +75,9 @@ class Server {
     void HandleStreamData_ACK(std::array<char, 65535> &recieveBuffer);
 
     std::unique_ptr<Falcon> falcon;
+
+    //List of known users
+    std::vector<User> knownUsers;
 };
 
 

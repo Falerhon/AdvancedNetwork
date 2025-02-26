@@ -36,6 +36,9 @@ public:
     void ConnectToServer();
     void ConnectionEvent(bool success, uint64_t uuid);
     void Disconnection();
+
+    void PingServer();
+
     //Handling of the packet according to their type
     void HandleConnection_ACK(const ClientMessage &mess);
     void HandleDisconnection(const ClientMessage &mess);

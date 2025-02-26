@@ -3,8 +3,7 @@
 #include "spdlog/spdlog.h"
 #include "Server.h"
 
-//List of known users
-std::vector<User> knownUsers;
+
 std::array<char, 65535> recieveBuffer;
 std::string from_ip;
 
@@ -217,7 +216,7 @@ void Server::HandlePing(const ServerMessage &mess) {
         std::cout << "Unknown user tried to ping" << std::endl;
     } else {
         it->lastPing = std::chrono::high_resolution_clock::now();
-
+        std::cout << "Server Received ping : " << std::endl;
         ServerMessage message = ServerMessage();
         message.MessType = PING_ACK;
         std::array<char, 65535> SendBuffer;
