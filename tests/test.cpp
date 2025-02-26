@@ -150,6 +150,14 @@ TEST_CASE("Client Times Out", "[falcon]") {
 
 
 TEST_CASE("Can Create Stream - Server", "[falcon]") {
+    Server server = Server();
+    Client client = Client();
+    client.ConnectToServer();
+    server.Update();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    client.Update();
+
+
 }
 
 TEST_CASE("Can Create Stream - Client", "[falcon]") {
