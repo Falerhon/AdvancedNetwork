@@ -266,7 +266,7 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
 
     REQUIRE(clientIt->second->id == serverIt->second->id);
 }
-}
+
 
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {
     /*Server server = Server();
