@@ -208,8 +208,13 @@ TEST_CASE("Can Send Data Through Stream", "[falcon]") {
 
     client.GenerateAndSendData();
     server.Update();
-
-    //server.falcon->existingStream[1]
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+/*
+    if (server.falcon->existingStream[0]->receivedPackets.size() > 0)
+        server.falcon->existingStream[0]->receivedPackets.end();
+    if (client.falcon->existingStream[0]->receivedPackets.size() > 0)
+        client.falcon->existingStream[0]->receivedPackets.end();
+*/
     //  REQUIRE();
 }
 

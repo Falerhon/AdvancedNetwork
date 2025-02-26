@@ -40,6 +40,13 @@ public:
     uint32_t id;
 
     static uint32_t GenerateId();
+
+    //Past data so we can resend them
+    std::map<int, int> previousData;
+
+    //History of the 32 last packets received
+    std::vector<uint8_t> receivedPackets;
+
 private:
     //Sender's current packet ID
     uint8_t currentPacketId = 0;
@@ -48,11 +55,7 @@ private:
     std::string endpointIp  = "127.0.0.1";
     int endpointPort = 5555;
     bool isReliable = false;
-    //Past data so we can resend them
-    std::map<int, int> previousData;
 
-    //History of the 32 last packets received
-    std::vector<uint8_t> receivedPackets;
 
     //Socket this stream is linked to
     Falcon& socket;
