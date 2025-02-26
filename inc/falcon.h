@@ -84,13 +84,12 @@ public:
     void SendStreamData(std::span<char, 65535> message, uint32_t streamId);
 
     void HandleAcknowledgeData(uint32_t streamId, std::span<char, 65535> message);
-private:
-    int SendToInternal(const std::string& to, uint16_t port, std::span<const char> message);
-    int ReceiveFromInternal(std::string& from, std::span<char, 65535> message);
 
     //Streams existing on this socket
     std::map<uint32_t, std::unique_ptr<Stream>> existingStream;
-
+private:
+    int SendToInternal(const std::string& to, uint16_t port, std::span<const char> message);
+    int ReceiveFromInternal(std::string& from, std::span<char, 65535> message);
 
     SocketType m_socket;
 };

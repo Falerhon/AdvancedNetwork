@@ -86,40 +86,7 @@ void Client::Update() {
             }
         }
 
-        if (std::chrono::high_resolution_clock::now() - lastPing > std::chrono::seconds(PINGTIME)) {
-            //std::cout << "Sending ping to server" << std::endl;
-            ClientMessage message = ClientMessage(CurrentUUID);
-            std::array<char, 65535> SendBuffer;
-            message.MessType = PING;
-            message.WriteBuffer(SendBuffer);
-
-            falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
-            lastPing = std::chrono::high_resolution_clock::now();
-
-            //TODO : MOVE THIS IN ANOTHER PLACE
-            if (doOnce) {
-                doOnce = false;
-
-                uint32_t id = falcon->CreateStream(true);
-                std::cout << "Stream Created : " << std::to_string(id) << std::endl;
-                ClientMessage messageTemp = ClientMessage(CurrentUUID);
-                std::array<char, 65535> SendBufferTemp;
-                message.MessType = STREAM_CREATE;
-                memcpy(&message.Data, &id, sizeof(id));
-                message.WriteBuffer(SendBufferTemp);
-
-                falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
-
-                streamId = id;
-            } else{
-
-                if (streamId != -1) {
-                    std::array<char, 65535> SendBufferTemp;
-                    falcon->SendStreamData(SendBufferTemp, streamId);
-                }
-
-            }
-        }
+        PingServer();
 
         if (std::chrono::high_resolution_clock::now() - lastPing_ack > std::chrono::seconds(TIMEOUTTIME)) {
             std::cout << "Server has timed out" << std::endl;
@@ -130,6 +97,8 @@ void Client::Update() {
             std::array<char, 65535> SendBufferTemp;
             messageTemp.MessType = DISCONNECT;
             messageTemp.WriteBuffer(SendBufferTemp);
+
+            IsConnected = false;
 
             falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
             return;
@@ -177,6 +146,28 @@ void Client::PingServer() {
 
         falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
         lastPing = std::chrono::high_resolution_clock::now();
+    }
+}
+
+void Client::CreateStream() {
+    ClientMessage message = ClientMessage(CurrentUUID);
+    uint32_t id = falcon->CreateStream(true);
+    std::cout << "Stream Created : " << std::to_string(id) << std::endl;
+    ClientMessage messageTemp = ClientMessage(CurrentUUID);
+    std::array<char, 65535> SendBufferTemp;
+    message.MessType = STREAM_CREATE;
+    memcpy(&message.Data, &id, sizeof(id));
+    message.WriteBuffer(SendBufferTemp);
+
+    falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
+
+    streamId = id;
+}
+
+void Client::GenerateAndSendData() {
+    if (streamId != -1) {
+        std::array<char, 65535> SendBufferTemp;
+        falcon->SendStreamData(SendBufferTemp, streamId);
     }
 }
 

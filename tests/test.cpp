@@ -61,9 +61,10 @@ TEST_CASE("Connection", "[falcon]") {
     server.Update();
 
     // Allow some time for the connection to be processed
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     client.Update();
+    server.Update();
     server.Update();
 
     // Extract the UUID for validation
@@ -149,18 +150,23 @@ TEST_CASE("Client Times Out", "[falcon]") {
 }
 
 
-TEST_CASE("Can Create Stream - Server", "[falcon]") {
+TEST_CASE("Can Create Stream - Client", "[falcon]") {
     Server server = Server();
     Client client = Client();
     client.ConnectToServer();
     server.Update();
     std::this_thread::sleep_for(std::chrono::seconds(1));
     client.Update();
+    server.Update();
 
+    client.CreateStream();
+    server.Update();
+    client.Update();
 
+    REQUIRE(client.falcon->existingStream[0] == server.falcon->existingStream[1]);
 }
 
-TEST_CASE("Can Create Stream - Client", "[falcon]") {
+TEST_CASE("Can Create Stream - Server", "[falcon]") {
 }
 
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {

@@ -29,6 +29,7 @@ public:
       Client();
 
     uint64_t CurrentUUID = -1;
+
     bool IsConnected = false;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> lastPing;
@@ -41,6 +42,8 @@ public:
     void Disconnection();
 
     void PingServer();
+    void CreateStream();
+    void GenerateAndSendData();
 
     //Handling of the packet according to their type
     void HandleConnection_ACK(const ClientMessage &mess);
@@ -54,6 +57,7 @@ public:
     void HandleStreamData_ACK(std::array<char, 65535> &recieveBuffer);
 
     std::unique_ptr<Falcon> falcon;
+
 
 };
 
