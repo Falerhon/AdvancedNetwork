@@ -52,6 +52,8 @@ class Server {
 
     void ClientDisconnected(uint64_t UUID);
 
+    void CreateStream(bool isReliable);
+
     void CheckTimeout();
 
     //Handling of the packet according to their type

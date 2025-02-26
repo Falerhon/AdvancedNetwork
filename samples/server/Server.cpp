@@ -182,6 +182,19 @@ void Server::ClientDisconnected(uint64_t UUID) {
     }
 }
 
+void Server::CreateStream(bool isReliable) {
+        ServerMessage message = ServerMessage();
+        uint32_t id = falcon->CreateStream(isReliable);
+        std::cout << "Stream Created : " << std::to_string(id) << std::endl;
+        ServerMessage messageTemp = ServerMessage();
+        std::array<char, 65535> SendBufferTemp;
+        message.MessType = STREAM_CREATE;
+        memcpy(&message.Data, &id, sizeof(id));
+        message.WriteBuffer(SendBufferTemp);
+
+        falcon->SendTo("127.0.0.1", 5555, std::span{SendBufferTemp.data(), static_cast<unsigned long>(std::strlen(SendBufferTemp.data()))});
+}
+
 void Server::HandleConnection(const ServerMessage &mess, std::string &ip, uint16_t &port) {
     //Check if user is known
     if (std::find(knownUsers.begin(), knownUsers.end(), mess.UserId) == knownUsers.end()) {
