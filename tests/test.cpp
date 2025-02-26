@@ -44,3 +44,43 @@ TEST_CASE("Can Receive From", "[falcon]") {
         message.end()));
     REQUIRE(from_ip == "127.0.0.1:5556");
 }
+
+TEST_CASE("On Connection - Server", "[falcon]") {
+
+}
+
+TEST_CASE("On Connection - Client", "[falcon]") {
+
+}
+
+TEST_CASE("On Client Disconnect", "[falcon]") {
+
+}
+
+TEST_CASE("Can Create Stream - Server", "[falcon]") {
+
+}
+
+TEST_CASE("Can Create Stream - Client", "[falcon]") {
+
+}
+
+TEST_CASE("Can Create Stream From External - Server", "[falcon]") {
+
+}
+
+TEST_CASE("Can Create Stream From External - Client", "[falcon]") {
+
+}
+
+TEST_CASE("Can Send Data Through Stream", "[falcon]") {
+
+}
+
+TEST_CASE("Can Receive Data From Stream", "[falcon]") {
+
+}
+
+TEST_CASE("Stream Reliability", "[falcon]") {
+
+}
