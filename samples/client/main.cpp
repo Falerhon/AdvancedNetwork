@@ -23,18 +23,30 @@ struct ClientMessage : Message {
 };
 
 uint64_t CurrentUUID = -1;
+std::chrono::time_point<std::chrono::high_resolution_clock> lastPing;
+std::chrono::time_point<std::chrono::high_resolution_clock> lastPing_ack;
 
 void ConnectToServer();
 void ConnectionEvent(bool success, uint64_t uuid);
 void Disconnection();
+//Handling of the packet according to their type
+void HandleConnection_ACK(const ClientMessage &mess);
+void HandleDisconnection(const ClientMessage &mess);
+void HandleDisconnection_ACK(const ClientMessage &mess);
+void HandlePing(const ClientMessage &mess);
+void HandlePing_ACK(const ClientMessage &mess);
+void HandleStreamCreate(const ClientMessage &mess);
+void HandleStreamCreate_ACK(const ClientMessage &mess);
+void HandleStreamData(std::array<char, 65535> &recieveBuffer);
+void HandleStreamData_ACK(std::array<char, 65535> &recieveBuffer);
 
 std::unique_ptr<Falcon> falcon;
 
 int main() {
     spdlog::set_level(spdlog::level::debug);
     spdlog::debug("Hello World!");
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastPing = std::chrono::high_resolution_clock::now();
-    std::chrono::time_point<std::chrono::high_resolution_clock> lastPing_ack = std::chrono::high_resolution_clock::now();
+    lastPing = std::chrono::high_resolution_clock::now();
+    lastPing_ack = std::chrono::high_resolution_clock::now();
 
     bool doOnce = true;
 
@@ -64,81 +76,47 @@ int main() {
             switch (mess.MessType) {
                 //Connection
                 case 0:
-
+                    std::cout << "Connection to the client is not supported" << std::endl;
                     break;
                 //Connectio_ACK
                 case 1: {
-                    uint64_t FoundUUID = -1;
-                    bool success;
-                    //TODO : Make sure this works
-                    success = mess.Data[0];
-
-                    memcpy(&FoundUUID, &buffer[2], sizeof(uint64_t));
-
-                    falcon->clientConnectionHandler(success, FoundUUID);
+                    HandleConnection_ACK(mess);
                 }
                 break;
                 //Disconnection
                 case 2: {
-                    ClientMessage message = ClientMessage(CurrentUUID);
-                    std::array<char, 65535> SendBuffer;
-                    message.MessType = DISCONNECT_ACK;
-                    message.WriteBuffer(SendBuffer);
-
-                    falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
-
-                    std::cout << "Server sent disconnection" << std::endl;
-                    falcon->serverDisconnectionHandler();
+                    HandleDisconnection(mess);
                     break;
                 }
                 //Disconnection_ACK
                 case 3:
-                    std::cout << "Server acknowledged the disconnection" << std::endl;
-                    falcon->serverDisconnectionHandler();
+                    HandleDisconnection_ACK(mess);
                 break;
                 //Ping
                 case 4:
-                    std::cout << "Not implemented yet" << std::endl;
+                    HandlePing(mess);
                 break;
                 //Ping_ACK
                 case 5:
                     //std::cout << "Ping acknowledged" << std::endl;
-                    lastPing_ack = std::chrono::high_resolution_clock::now();
+                    HandlePing_ACK(mess);
                 break;
                 //StreamCreate
                 case 6: {
-                    std::cout << "Server created a stream" << std::endl;
-
-                    std::string dataStr = buffer.data();
-                    //Remove message type
-                    dataStr.erase(dataStr.begin());
-
-                    uint32_t FoundStreamId = -1;
-                    try {
-                        FoundStreamId = std::stoull(dataStr);
-                    }catch(const std::invalid_argument& e){}
-
-                    if (FoundStreamId != -1) {
-                        //TODO : Stream creation
-                    }
-
+                    HandleStreamCreate(mess);
                     break;
                 }
                 //StreamCreate_ACK
                 case 7:
-                    std::cout << "Acknowledged stream creation" << std::endl;
+                    HandleStreamCreate_ACK(mess);
                 break;
                 //StreamData
                 case 8:
-                    std::cout << "Data recieved" << std::endl;
-                    //TODO : STREAM READING DATA
+                    HandleStreamData(buffer);
                 break;
                 //StreamData_ACK
                 case 9:
-                    std::cout << "Acknowledged stream data" << std::endl;
-                    uint32_t streamId;
-                    memcpy(&streamId, &buffer[1], sizeof(streamId));
-                    falcon->HandleAcknowledgeData(streamId, buffer);
+                    HandleStreamData_ACK(buffer);
                 break;
                 default:
                     std::cout << "Unknown message type " << mess.MessType << std::endl;
@@ -228,4 +206,64 @@ void ConnectionEvent(bool success, uint64_t uuid) {
 void Disconnection() {
     std::cout << "Lost connection with the server" << std::endl;
     exit(0);
+}
+
+void HandleConnection_ACK(const ClientMessage &mess) {
+    uint64_t FoundUUID = -1;
+
+    bool success = mess.Data[0];
+
+    memcpy(&FoundUUID, &mess.Data[1], sizeof(uint64_t));
+
+    falcon->clientConnectionHandler(success, FoundUUID);
+}
+
+void HandleDisconnection(const ClientMessage &mess) {
+    ClientMessage message = ClientMessage(CurrentUUID);
+    std::array<char, 65535> SendBuffer;
+    message.MessType = DISCONNECT_ACK;
+    message.WriteBuffer(SendBuffer);
+
+    falcon->SendTo("127.0.0.1", 5555, std::span{SendBuffer.data(), static_cast<unsigned long>(std::strlen(SendBuffer.data()))});
+
+    std::cout << "Server sent disconnection" << std::endl;
+    falcon->serverDisconnectionHandler();
+}
+
+void HandleDisconnection_ACK(const ClientMessage &mess) {
+    std::cout << "Server acknowledged the disconnection" << std::endl;
+}
+
+void HandlePing(const ClientMessage &mess) {
+    std::cout << "One-way ping is currently used, server pinging not supported" << std::endl;
+}
+
+void HandlePing_ACK(const ClientMessage &mess) {
+    lastPing_ack = std::chrono::high_resolution_clock::now();
+}
+
+void HandleStreamCreate(const ClientMessage &mess) {
+    std::cout << "Server created a stream" << std::endl;
+
+    uint32_t id;
+    memcpy(&id, &mess.Data[0], sizeof(id));
+    uint32_t idCreated = falcon->CreateStreamFromExternal(id, true);
+    std::cout << "Stream Created : " << std::to_string(idCreated) << std::endl;
+}
+
+void HandleStreamCreate_ACK(const ClientMessage &mess) {
+    std::cout << "Server acknowledged stream creation" << std::endl;
+}
+
+void HandleStreamData(std::array<char, 65535> &recieveBuffer) {
+    uint32_t streamId;
+    memcpy(&streamId, &recieveBuffer[1], sizeof(streamId));
+    falcon->HandleStreamData(streamId, recieveBuffer);
+}
+
+void HandleStreamData_ACK(std::array<char, 65535> &recieveBuffer) {
+    std::cout << "Acknowledged stream data" << std::endl;
+    uint32_t streamId;
+    memcpy(&streamId, &recieveBuffer[1], sizeof(streamId));
+    falcon->HandleAcknowledgeData(streamId, recieveBuffer);
 }

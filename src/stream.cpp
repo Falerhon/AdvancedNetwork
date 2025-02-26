@@ -8,6 +8,7 @@
 #include <iostream>
 #include <random>
 #include <cstring>
+#include <algorithm>
 #include "falcon.h"
 
 //Server
