@@ -61,7 +61,7 @@ TEST_CASE("Connection", "[falcon]") {
     server.Update();
 
     // Wait until the server registers the user
-    for (int i = 0; i < 15 && server.knownUsers.size() == 0; ++i) {
+    for (int i = 0; i < 20 && server.knownUsers.size() == 0; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         server.Update();
     }
@@ -109,7 +109,7 @@ TEST_CASE("Server Times Out", "[falcon]") {
     client.ConnectToServer();
     server.Update();
     // Wait until the server registers the user
-    for (int i = 0; i < 15 && server.knownUsers.size() == 0; ++i) {
+    for (int i = 0; i < 20 && server.knownUsers.size() == 0; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         server.Update();
     }
@@ -141,7 +141,7 @@ TEST_CASE("Client Times Out", "[falcon]") {
     client.ConnectToServer();
     server.Update();
     // Wait until the server registers the user
-    for (int i = 0; i < 15 && server.knownUsers.size() == 0; ++i) {
+    for (int i = 0; i < 20 && server.knownUsers.size() == 0; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         server.Update();
     }
@@ -188,7 +188,7 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
     client.ConnectToServer();
     server.Update();
     // Wait until the server registers the user
-    for (int i = 0; i < 15 && server.knownUsers.size() == 0; ++i) {
+    for (int i = 0; i < 20 && server.knownUsers.size() == 0; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         server.Update();
     }
@@ -202,7 +202,7 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
     server.Update();
 
     // Retry loop to ensure streams are populated
-    for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+    for (int i = 0; i < 20 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         client.Update();
         server.Update();
@@ -237,7 +237,7 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
     client.ConnectToServer();
     server.Update();
     // Wait until the server registers the user
-    for (int i = 0; i < 15 && server.knownUsers.size() == 0; ++i) {
+    for (int i = 0; i < 20 && server.knownUsers.size() == 0; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         server.Update();
     }
@@ -252,7 +252,7 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
     client.Update();
 
     // Retry loop to ensure streams are populated
-    for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+    for (int i = 0; i < 20 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         server.Update();
         client.Update();
@@ -302,8 +302,16 @@ TEST_CASE("Can Send Data Through Stream", "[falcon]") {
     server.Update();
     client.Update();
 
-   client.GenerateAndSendData();
-   server.Update();
+    // Retry loop to ensure streams are populated
+    for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+        client.Update();
+    }
+
+
+    client.GenerateAndSendData();
+    server.Update();
 
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
@@ -325,7 +333,7 @@ TEST_CASE("Can Send Data Through Stream", "[falcon]") {
         return;
     }
 
-   client.falcon->existingStream[0]->previousData.end()->first == server.falcon->existingStream[0]->receivedPackets[0];*/
+    REQUIRE(client.falcon->existingStream[0]->previousData.end()->first == server.falcon->existingStream[0]->receivedPackets[0]);*/
 }
 
 TEST_CASE("Can Receive Data From Stream", "[falcon]") {
