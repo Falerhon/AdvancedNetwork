@@ -204,11 +204,23 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
 
+    if (client.falcon->existingStream.empty()) {
+        FAIL("client.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+    if (server.falcon->existingStream.empty()) {
+        FAIL("server.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+
     auto clientIt = client.falcon->existingStream.begin();
     auto serverIt = std::prev(server.falcon->existingStream.end());
 
-    REQUIRE(clientIt->second != nullptr);
-    REQUIRE(serverIt->second != nullptr);
+    if (!clientIt->second || !serverIt->second) {
+        FAIL("clientIt or serverIt is nullptr");
+        return;
+    }
+
     REQUIRE(clientIt->second->id == serverIt->second->id);
 }
 
@@ -235,13 +247,25 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
 
+    if (client.falcon->existingStream.empty()) {
+        FAIL("client.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+    if (server.falcon->existingStream.empty()) {
+        FAIL("server.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+
     auto clientIt = client.falcon->existingStream.begin();
     auto serverIt = std::prev(server.falcon->existingStream.end());
 
-    REQUIRE(clientIt->second != nullptr);
-    REQUIRE(serverIt->second != nullptr);
+    if (!clientIt->second || !serverIt->second) {
+        FAIL("clientIt or serverIt is nullptr");
+        return;
+    }
 
     REQUIRE(clientIt->second->id == serverIt->second->id);
+}
 }
 
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {
