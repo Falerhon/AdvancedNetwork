@@ -196,7 +196,7 @@ void Stream::SendAcknowledgment() {
         }
     }
 
-    std::array<char, 10> SendBuffer;
+    std::array<char, 32> SendBuffer;
     char chrType = MessageType::STREAM_DATA_ACK & 0x0F;
 
     //Type of the message
@@ -206,7 +206,7 @@ void Stream::SendAcknowledgment() {
     //Package ID
     memcpy(&SendBuffer[6], &currentPacketId, sizeof(currentPacketId));
     //History
-    memcpy(&SendBuffer[7], history.data(), sizeof(history));
+    memcpy(&SendBuffer[7], &history, sizeof(history));
 
     socket.SendTo(endpointIp, endpointPort, std::span{SendBuffer.data(), SendBuffer.size()});
 

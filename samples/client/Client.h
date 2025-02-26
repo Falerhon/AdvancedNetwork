@@ -22,7 +22,7 @@ struct ClientMessage : Message {
         char chrType = MessType & 0x0F;
         memcpy(&buff[0], &chrType, sizeof(chrType));
         memcpy(&buff[1], &UserId, sizeof(uint64_t));
-        memcpy(&buff[9], &Data, Data.size());
+        memcpy(&buff[9], &Data, std::strlen(Data.data()));
     }
 };
 

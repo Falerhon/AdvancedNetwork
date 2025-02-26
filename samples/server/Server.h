@@ -34,7 +34,7 @@ struct ServerMessage : Message {
     void WriteBuffer(std::array<char, 65535> &buff) {
         char chrType = MessType & 0x0F;
         memcpy(&buff[0], &chrType, sizeof(chrType));
-        memcpy(&buff[1], &Data, Data.size());
+        memcpy(&buff[1], &Data, std::strlen(Data.data()));
     }
 };
 
