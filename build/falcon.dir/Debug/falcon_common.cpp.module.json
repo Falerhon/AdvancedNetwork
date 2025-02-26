@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "falcon.dir\\Debug\\falcon_common.obj",
+            "outputs": [
+                "C:\\Users\\Lea\\Desktop\\Network\\AdvancedNetwork\\build\\Debug\\falcon.pdb",
+                "falcon.dir\\Debug\\"
+            ],
+            "requires": []
+        }
+    ]
+}

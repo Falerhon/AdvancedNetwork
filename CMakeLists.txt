@@ -24,3 +24,5 @@ endif()
 add_subdirectory(externals)
 add_subdirectory(samples)
 add_subdirectory(tests)
+
+enable_testing()

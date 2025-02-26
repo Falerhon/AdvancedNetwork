@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Lea\Desktop\Network\AdvancedNetwork\build\CMakeFiles\798aae60737b01d42dac8d95af85494a\Experimental.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Lea\Desktop\Network\AdvancedNetwork\tests\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\Lea\Desktop\Network\AdvancedNetwork\build\tests\CMakeFiles\Experimental" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{370E2921-0B7F-37A5-9F3C-25101C962DEF}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

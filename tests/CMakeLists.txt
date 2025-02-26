@@ -5,12 +5,11 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(Catch2)
-
-list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
 include(CTest)
 include(Catch)
 
 add_executable(tests test.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain falcon)
-catch_discover_tests(tests)
+catch_discover_tests(tests TEST_PREFIX "UnitTests." TEST_LIST myTests)

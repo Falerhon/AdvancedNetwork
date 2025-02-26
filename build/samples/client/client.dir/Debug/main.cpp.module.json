@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "client.dir\\Debug\\main.obj",
+            "outputs": [
+                "C:\\Users\\Lea\\Desktop\\Network\\AdvancedNetwork\\build\\samples\\client\\client.dir\\Debug\\vc143.pdb",
+                "client.dir\\Debug\\"
+            ],
+            "requires": []
+        }
+    ]
+}

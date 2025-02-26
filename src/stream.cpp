@@ -122,24 +122,18 @@ void Stream::OnDataReceived(std::span<const char> Data) {
     offset += sizeof(numOfPackets);
 
     for (int i = 0; i < numOfPackets; i++) {
-        std::cout << "Loop # " << i << std::endl;
         size_t packetSize = sizeof(uint8_t) + sizeof(int);
-
-        std::cout << "packetSize Offset : " << offset << std::endl;
         offset += sizeof(packetSize);
-        std::cout << "packetID Offset : " << offset << std::endl;
 
         //Packet ID
         uint8_t packetID;
         memcpy(&packetID, &Data[offset], sizeof(packetID));
         offset += sizeof(packetID);
-        std::cout << "packetData Offset : " << offset << std::endl;
 
         //Packet Data
         int packetData;
         memcpy(&packetData, &Data[offset], sizeof(packetData));
         offset += sizeof(packetData);
-        std::cout << "Final offset (of this loop) : " << offset << std::endl;
 
         std::cout << "Message type : " << std::to_string(chrType) << " stream : " << std::to_string(streamID) << " num of packets : " <<
                 std::to_string(numOfPackets) << " packet size : " << std::to_string(packetSize) << " packet ID : " <<
@@ -149,7 +143,10 @@ void Stream::OnDataReceived(std::span<const char> Data) {
         if (receivedPackets.size() > 32)
             receivedPackets.erase(receivedPackets.begin());
 
-        receivedPackets.push_back(packetID);
+        if (std::find(receivedPackets.begin(), receivedPackets.end(), packetID) == receivedPackets.end()) {
+            receivedPackets.push_back(packetID);
+        }
+
     }
 
     std::sort(receivedPackets.begin(), receivedPackets.end());
@@ -256,30 +253,24 @@ void Stream::HandleReliability(uint8_t LatestID, std::array<uint8_t, 4> History)
     int numOfPacket = missingPackets.size();
     memcpy(&Buffer[offset], &numOfPacket, sizeof(numOfPacket));
     offset += sizeof(numOfPacket);
-int i = 0;
+
     //Calculate the total size of the missing packets' data
     for (uint8_t packetID: missingPackets) {
         if (previousData.find(packetID) != previousData.end()) {
             int packetData = previousData[packetID];
-            std::cout << "Loop # " << i << std::endl;
-            std::cout << "packetSize offset : " << offset << std::endl;
+
             //Add the size of the packet (size of ID + PacketData)
             size_t packetSize = sizeof(uint8_t) + sizeof(int);
             memcpy(&Buffer[offset], &packetSize, sizeof(packetSize));
             offset += sizeof(packetSize);
-            std::cout << "packetID offset : " << offset << std::endl;
 
             //Add the ID
             memcpy(&Buffer[offset], &packetID, sizeof(packetID));
             offset += sizeof(packetID);
-            std::cout << "packetData offset : " << offset << std::endl;
 
             //Add the data
             memcpy(&Buffer[offset], &packetData, sizeof(packetData));
             offset += sizeof(packetData);
-            std::cout << "Final loop offset : " << offset << std::endl;
-
-            i++;
         }
     }
 
