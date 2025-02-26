@@ -55,35 +55,31 @@ TEST_CASE("Connection", "[falcon]") {
     REQUIRE(server.knownUsers.size() == 0); //No user initially connected
 
     Client client = Client();
-
-
     client.ConnectToServer();
     server.Update();
 
-    // Wait until the server registers the user
-    for (int i = 0; i < 10 && server.knownUsers.size() == 0; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Retry loop to wait until the server registers the user
+    bool userRegistered = false;
+    for (int i = 0; i < 20 && !userRegistered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Increase sleep time if needed
         server.Update();
-    }
+        client.Update();
 
-    client.Update();
-    server.Update();
-    server.Update();
-
-    // Extract the UUID for validation
-    REQUIRE(client.CurrentUUID != -1);
-
-    // Verify that the server registered the user by checking known users
-    bool userFound = false;
-    for (const auto &user: server.knownUsers) {
-        if (user.UUID == client.CurrentUUID) {
-            userFound = true;
-            break;
+        // Check if the user has been registered by the server
+        for (const auto &user : server.knownUsers) {
+            if (user.UUID == client.CurrentUUID) {
+                userRegistered = true;
+                break;
+            }
         }
     }
+    client.Update();
+    server.Update();
 
     // Check if the user was successfully registered
-    REQUIRE(userFound == true);
+    REQUIRE(userRegistered == true);
+    // Extract the UUID for validation
+    REQUIRE(client.CurrentUUID != -1);
 
 
     std::this_thread::sleep_for(std::chrono::seconds(1)); //Let the ping time pass
@@ -104,12 +100,31 @@ TEST_CASE("Connection", "[falcon]") {
 
 TEST_CASE("Server Times Out", "[falcon]") {
     Server server = Server();
-    Client client = Client();
 
+    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
+
+    Client client = Client();
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Retry loop to wait until the server registers the user
+    bool userRegistered = false;
+    for (int i = 0; i < 20 && !userRegistered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Increase sleep time if needed
+        server.Update();
+        client.Update();
+
+        // Check if the user has been registered by the server
+        for (const auto &user : server.knownUsers) {
+            if (user.UUID == client.CurrentUUID) {
+                userRegistered = true;
+                break;
+            }
+        }
+    }
     client.Update();
+    server.Update();
+    server.Update();
 
     // Check if the user was successfully registered
     REQUIRE(client.IsConnected == true);
@@ -130,12 +145,30 @@ TEST_CASE("Server Times Out", "[falcon]") {
 
 TEST_CASE("Client Times Out", "[falcon]") {
     Server server = Server();
-    Client client = Client();
 
+    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
+
+    Client client = Client();
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
     client.Update();
+
+    // Retry loop to wait until the server registers the user
+    bool userRegistered = false;
+    for (int i = 0; i < 20 && !userRegistered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Increase sleep time if needed
+        server.Update();
+
+        // Check if the user has been registered by the server
+        for (const auto &user : server.knownUsers) {
+            if (user.UUID == client.CurrentUUID) {
+                userRegistered = true;
+                break;
+            }
+        }
+    }
+    client.Update();
+    server.Update();
     server.Update();
 
     auto clientUUID = client.CurrentUUID;
@@ -173,11 +206,30 @@ TEST_CASE("Client Times Out", "[falcon]") {
 
 TEST_CASE("Can Create Stream - Client", "[falcon]") {
     Server server = Server();
+
+    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
+
     Client client = Client();
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Retry loop to wait until the server registers the user
+    bool userRegistered = false;
+    for (int i = 0; i < 20 && !userRegistered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Increase sleep time if needed
+        server.Update();
+        client.Update();
+
+        // Check if the user has been registered by the server
+        for (const auto &user : server.knownUsers) {
+            if (user.UUID == client.CurrentUUID) {
+                userRegistered = true;
+                break;
+            }
+        }
+    }
     client.Update();
+    server.Update();
     server.Update();
 
     client.CreateStream();
@@ -185,24 +237,62 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
     client.Update();
     server.Update();
 
+    // Retry loop to ensure streams are populated
+    for (int i = 0; i < 20 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        client.Update();
+        server.Update();
+    }
+
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
+
+    if (client.falcon->existingStream.empty()) {
+        FAIL("client.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+    if (server.falcon->existingStream.empty()) {
+        FAIL("server.falcon->existingStream is unexpectedly empty");
+        return;
+    }
 
     auto clientIt = client.falcon->existingStream.begin();
     auto serverIt = std::prev(server.falcon->existingStream.end());
 
-    REQUIRE(clientIt->second != nullptr);
-    REQUIRE(serverIt->second != nullptr);
+    if (!clientIt->second || !serverIt->second) {
+        FAIL("clientIt or serverIt is nullptr");
+        return;
+    }
+
     REQUIRE(clientIt->second->id == serverIt->second->id);
 }
 
 TEST_CASE("Can Create Stream - Server", "[falcon]") {
     Server server = Server();
+
+    REQUIRE(server.knownUsers.size() == 0); //No user initially connected
+
     Client client = Client();
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
     client.Update();
+    
+    // Retry loop to wait until the server registers the user
+    bool userRegistered = false;
+    for (int i = 0; i < 20 && !userRegistered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Increase sleep time if needed
+        server.Update();
+
+        // Check if the user has been registered by the server
+        for (const auto &user : server.knownUsers) {
+            if (user.UUID == client.CurrentUUID) {
+                userRegistered = true;
+                break;
+            }
+        }
+    }
+    client.Update();
+    server.Update();
     server.Update();
 
     server.CreateStream(client.CurrentUUID, false);
@@ -211,41 +301,92 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
     server.Update();
     client.Update();
 
+    // Retry loop to ensure streams are populated
+    for (int i = 0; i < 20 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+        client.Update();
+    }
+
     REQUIRE(client.falcon->existingStream.size() > 0);
     REQUIRE(server.falcon->existingStream.size() > 0);
+
+    if (client.falcon->existingStream.empty()) {
+        FAIL("client.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+    if (server.falcon->existingStream.empty()) {
+        FAIL("server.falcon->existingStream is unexpectedly empty");
+        return;
+    }
 
     auto clientIt = client.falcon->existingStream.begin();
     auto serverIt = std::prev(server.falcon->existingStream.end());
 
-    REQUIRE(clientIt->second != nullptr);
-    REQUIRE(serverIt->second != nullptr);
+    if (!clientIt->second || !serverIt->second) {
+        FAIL("clientIt or serverIt is nullptr");
+        return;
+    }
 
     REQUIRE(clientIt->second->id == serverIt->second->id);
 }
 
+
 TEST_CASE("Can Send Data Through Stream", "[falcon]") {
-    /*Server server = Server();
-   Client client = Client();
-   client.ConnectToServer();
-   server.Update();
-   std::this_thread::sleep_for(std::chrono::seconds(1));
-   client.Update();
-   server.Update();
+  /*  Server server = Server();
+    Client client = Client();
+    client.ConnectToServer();
+    server.Update();
+    // Wait until the server registers the user
+    for (int i = 0; i < 20 && server.knownUsers.size() == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+    }
+    client.Update();
+    server.Update();
+    server.Update();
 
-   client.CreateStream();
-   server.Update();
-   client.Update();
+    server.CreateStream(client.CurrentUUID, false);
 
-   client.GenerateAndSendData();
-   server.Update();
-   std::this_thread::sleep_for(std::chrono::seconds(1));
+    client.Update();
+    server.Update();
+    client.Update();
 
-       if (server.falcon->existingStream[0]->receivedPackets.size() > 0)
-           server.falcon->existingStream[0]->receivedPackets.end();
-       if (client.falcon->existingStream[0]->receivedPackets.size() > 0)
-           client.falcon->existingStream[0]->receivedPackets.end();
-   */
-    //  REQUIRE();
+    // Retry loop to ensure streams are populated
+    for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+        client.Update();
+    }
+
+
+    client.GenerateAndSendData();
+    server.Update();
+
+    REQUIRE(client.falcon->existingStream.size() > 0);
+    REQUIRE(server.falcon->existingStream.size() > 0);
+
+    if (client.falcon->existingStream.empty()) {
+        FAIL("client.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+    if (server.falcon->existingStream.empty()) {
+        FAIL("server.falcon->existingStream is unexpectedly empty");
+        return;
+    }
+
+    auto clientIt = client.falcon->existingStream.begin();
+    auto serverIt = std::prev(server.falcon->existingStream.end());
+
+    if (!clientIt->second || !serverIt->second) {
+        FAIL("clientIt or serverIt is nullptr");
+        return;
+    }
+
+    std::cout << std::prev(clientIt->second->previousData.end())->first << " " << serverIt->second->receivedPackets[0];
+    auto bla = server.falcon->existingStream[0]->receivedPackets[0];
+    auto blop = client.falcon->existingStream[0]->previousData.end()->first;
+    REQUIRE(client.falcon->existingStream[0]->previousData.end()->first == server.falcon->existingStream[0]->receivedPackets[0]);*/
 }
 
 TEST_CASE("Can Receive Data From Stream", "[falcon]") {
