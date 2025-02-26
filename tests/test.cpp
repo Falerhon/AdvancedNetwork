@@ -108,8 +108,14 @@ TEST_CASE("Server Times Out", "[falcon]") {
 
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Wait until the server registers the user
+    for (int i = 0; i < 10 && server.knownUsers.size() == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+    }
     client.Update();
+    server.Update();
+    server.Update();
 
     // Check if the user was successfully registered
     REQUIRE(client.IsConnected == true);
@@ -134,8 +140,13 @@ TEST_CASE("Client Times Out", "[falcon]") {
 
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Wait until the server registers the user
+    for (int i = 0; i < 10 && server.knownUsers.size() == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+    }
     client.Update();
+    server.Update();
     server.Update();
 
     auto clientUUID = client.CurrentUUID;
@@ -176,8 +187,13 @@ TEST_CASE("Can Create Stream - Client", "[falcon]") {
     Client client = Client();
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Wait until the server registers the user
+    for (int i = 0; i < 10 && server.knownUsers.size() == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+    }
     client.Update();
+    server.Update();
     server.Update();
 
     client.CreateStream();
@@ -201,8 +217,13 @@ TEST_CASE("Can Create Stream - Server", "[falcon]") {
     Client client = Client();
     client.ConnectToServer();
     server.Update();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Wait until the server registers the user
+    for (int i = 0; i < 10 && server.knownUsers.size() == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+    }
     client.Update();
+    server.Update();
     server.Update();
 
     server.CreateStream(client.CurrentUUID, false);
