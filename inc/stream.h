@@ -47,9 +47,11 @@ public:
     //History of the 32 last packets received
     std::vector<uint8_t> receivedPackets;
 
-private:
+    std::map<uint8_t, int> amountOfPacketsInData;
     //Sender's current packet ID
     uint8_t currentPacketId = 0;
+private:
+
     //Only needed on the server
     uint64_t linkedClient = 0;
     std::string endpointIp  = "127.0.0.1";

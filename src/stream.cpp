@@ -130,6 +130,10 @@ void Stream::OnDataReceived(std::span<const char> Data) {
         memcpy(&packetID, &Data[offset], sizeof(packetID));
         offset += sizeof(packetID);
 
+        if (i  == 0) {
+            amountOfPacketsInData[packetID] = numOfPackets;
+        }
+
         //Packet Data
         int packetData;
         memcpy(&packetData, &Data[offset], sizeof(packetData));

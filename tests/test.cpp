@@ -397,13 +397,96 @@ TEST_CASE("Can Send Data Through Stream", "[falcon]") {
         FAIL("serverLastDataReceived is invalid");
         return;
     }
-    
+
     REQUIRE(clientLastDataSent->first == serverLastDataReceived[0]);
 }
 
 TEST_CASE("Stream Reliability", "[falcon]") {
-    //Send Data from client
-    //Don't update server
-    //Update client 2-3 x
-    //Update serv and check if the packet send have the previous paquets
+    Server server = Server();
+    Client client = Client();
+    client.ConnectToServer();
+    server.Update();
+    client.Update();
+
+    // Retry loop to wait until the server registers the user
+    bool userRegistered = false;
+    for (int i = 0; i < 20 && !userRegistered; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Increase sleep time if needed
+        server.Update();
+
+        // Check if the user has been registered by the server
+        for (const auto &user: server.knownUsers) {
+            if (user.UUID == client.CurrentUUID) {
+                userRegistered = true;
+                break;
+            }
+        }
+    }
+    client.Update();
+    server.Update();
+    server.Update();
+
+    client.CreateStream();
+
+    server.Update();
+    client.Update();
+    server.Update();
+
+    // Retry loop to ensure streams are populated
+    for (int i = 0; i < 15 && (client.falcon->existingStream.empty() || server.falcon->existingStream.empty()); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        server.Update();
+        client.Update();
+    }
+
+    auto clientIt = client.falcon->existingStream.begin();
+    auto serverIt = std::prev(server.falcon->existingStream.end());
+    if (!clientIt->second || !serverIt->second) {
+        FAIL("clientIt or serverIt is nullptr");
+        return;
+    }
+
+
+    for (int i = 0; i < 5; i++) {
+        client.GenerateAndSendData();
+        client.Update();
+    }
+
+    std::array<char, 32> SendBuffer;
+    char chrType = MessageType::STREAM_DATA_ACK & 0x0F;
+
+    //Type of the message
+    memcpy(&SendBuffer[0], &chrType, sizeof(chrType));
+    //Stream ID
+    memcpy(&SendBuffer[1], &serverIt->second->id, sizeof(serverIt->second->id));
+
+    //Package ID
+    uint8_t packetID = 5;
+    memcpy(&SendBuffer[6], &packetID, sizeof(packetID));
+    //History
+    std::array<char, 4> history{};
+    history[0] = 0x98;  // 1001 1000 in binary
+    history[1] = 0x00;  // 0000 0000 in binary
+    history[2] = 0x00;  // 0000 0000 in binary
+    history[3] = 0x00;  // 0000 0000 in binary
+    memcpy(&SendBuffer[7], &history, sizeof(history));
+
+    std::string ip = "127.0.0.1";
+    auto port = 5555;
+    for (auto user : server.knownUsers) {
+        if (user.UUID == client.CurrentUUID) {
+            ip = user.address;
+            port = user.port;
+        }
+    }
+    server.falcon->SendTo(ip, port, std::span{SendBuffer.data(), SendBuffer.size()});
+
+    client.Update();
+    client.Update();client.Update();client.Update();client.Update();
+    server.Update();server.Update(); server.Update();
+    server.Update();server.Update(); server.Update();
+
+    auto latestPackage = std::prev(serverIt->second->amountOfPacketsInData.end());
+
+    REQUIRE(latestPackage->second == 3);
 }
