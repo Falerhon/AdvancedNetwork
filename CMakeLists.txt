@@ -1,28 +1,41 @@
 cmake_minimum_required(VERSION 3.30)
-project(falcon)
+project(MagnumBootstrap)
 
-set(CMAKE_CXX_STANDARD 20)
-
-if(WIN32)
-    set(FALCON_BACKEND src/falcon_windows.cpp)
-    set(WINDOWS_LIBS Ws2_32)
-else ()
-    set(FALCON_BACKEND src/falcon_posix.cpp)
-endif (WIN32)
-
-add_library(falcon STATIC inc/falcon.h src/falcon_common.cpp ${FALCON_BACKEND})
-add_library(stream STATIC inc/stream.h src/stream.cpp)
-target_include_directories(falcon PUBLIC inc)
-target_include_directories(stream PUBLIC inc)
-target_link_libraries(falcon PUBLIC spdlog::spdlog_header_only fmt::fmt-header-only)
-target_link_libraries(falcon PUBLIC stream)
-
-if(WIN32)
-    target_link_libraries(falcon PRIVATE ${WINDOWS_LIBS})
-endif()
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules/" ${CMAKE_MODULE_PATH})
 
 add_subdirectory(externals)
-add_subdirectory(samples)
-add_subdirectory(tests)
+find_package(Magnum REQUIRED
+        GL
+        GlfwApplication
+        Primitives
+        Shaders
+        Trade
+        MeshTools
+        Primitives
+        SceneGraph)
+find_package(MagnumIntegration REQUIRED ImGui Bullet)
+find_package(Bullet REQUIRED Dynamics)
 
-enable_testing()
+set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
+
+add_executable(MagnumBootstrap
+        src/main.cpp)
+
+target_include_directories(MagnumBootstrap PUBLIC inc)
+set_property(TARGET MagnumBootstrap PROPERTY CXX_STANDARD 20)
+target_link_libraries(MagnumBootstrap PRIVATE
+        Magnum::Application
+        Magnum::GL
+        Magnum::Magnum
+        Magnum::MeshTools
+        Magnum::Primitives
+        Magnum::SceneGraph
+        Magnum::Shaders
+        Magnum::Trade
+        MagnumIntegration::Bullet
+        Bullet::Dynamics
+        MagnumIntegration::ImGui
+        BulletDynamics
+        BulletCollision
+        LinearMath
+        Bullet3Common)
