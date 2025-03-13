@@ -70,7 +70,7 @@ private:
 
     btBoxShape boxShape{{.5f, .5f, .5f}}; //Collision shape used for collisions
     btSphereShape sphereShape{{.25f}};
-    btBoxShape groundShape{{4.0f, .5f, 4.0f}};
+    btBoxShape groundShape{{8.0f, .5f, 8.0f}};
 
 
     //The world has to live longer than the scene so the RigidBody instances can remove themselves
@@ -111,7 +111,9 @@ public:
         bWorld.addRigidBody(bRigidBody.get());
     }
 
-    ~RigidBody() { bWorld.removeRigidBody(bRigidBody.get()); }
+    ~RigidBody() override {
+        bWorld.removeRigidBody(bRigidBody.get());
+    }
 
     btRigidBody &getRigidBody() { return *bRigidBody; }
 
@@ -168,7 +170,7 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
 
     camera = new SceneGraph::Camera3D(*cameraObject);
     camera->setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
-            .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.001f, 100.0f))
+            .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.1f, 100.0f))
             .setViewport(GL::defaultFramebuffer.viewport().size());
 
     //Create an instanced shader
@@ -214,15 +216,17 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
 
     //Create the ground
     auto *ground = new RigidBody{&scene, 0.f, &groundShape, bWorld};
-    new ColoredDrawable{*ground, boxInstancesDatas, 0xffffff_rgbf, Matrix4::scaling({4.f, .5f, 4.f}), drawableGroup};
+    new ColoredDrawable{*ground, boxInstancesDatas, 0xffffff_rgbf, Matrix4::scaling({8.f, .5f, 8.f}), drawableGroup};
 
+    int nbOfBoxPerSides = 5;
+    float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
     //Create boxes with random colors
     Deg boxHue = 42.0_degf;
-    for (Int i = 0; i != 5; ++i) {
-        for (Int j = 0; j != 5; ++j) {
-            for (Int k = 0; k != 5; ++k) {
+    for (Int i = 0; i != nbOfBoxPerSides; ++i) {
+        for (Int j = 0; j != nbOfBoxPerSides; ++j) {
+            for (Int k = 0; k != nbOfBoxPerSides; ++k) {
                 auto *o = new RigidBody{&scene, 1.f, &boxShape, bWorld};
-                o->translate({i - 2.f, j + 4.f, k - 2.f});
+                o->translate({i - centerOffset, j + centerOffset, k - centerOffset});
                 o->syncPose();
 
                 new ColoredDrawable{
@@ -278,7 +282,7 @@ void MyApplication::drawEvent() {
     //Draw the debugs
     if (drawDebug) {
         if (drawObjects) {
-            GL::Renderer::setDepthFunction(GL::Renderer::DepthFunction::LessOrEqual);
+            //GL::Renderer::setDepthFunction(GL::Renderer::DepthFunction::LessOrEqual);
             //Avoid flickering when drawing on top of objects
 
             debugDraw.setTransformationProjectionMatrix(
