@@ -33,6 +33,7 @@
 #include "entt/entt.hpp"
 #include "GameObject/Drawable/MBDrawable.h"
 #include "GameObject/Object/MBCubeObject.h"
+#include "GameObject/Object/MBSphereObject.h"
 #include "GameObject/RigidBody/MBRigidBody.h"
 
 using namespace Magnum;
@@ -67,7 +68,7 @@ private:
     btSequentialImpulseConstraintSolver bSolver; //Resolve the forces, constraints and collisions between Rigid bodies
 
     btBoxShape boxShape{{.5f, .5f, .5f}}; //Collision shape used for collisions
-    btSphereShape sphereShape{{.25f}};
+    btSphereShape sphereShape{{0.5f}};
     btBoxShape groundShape{{8.0f, .5f, 8.0f}};
 
 
@@ -82,7 +83,7 @@ private:
 
     Object3D *cameraRig, *cameraObject;
 
-    bool drawObjects{true}, drawDebug{false}, shootBox{true};
+    bool drawObjects{true}, drawDebug{false}, shootBox{false};
 };
 
 MyApplication::MyApplication(const Arguments &arguments): Platform::Application{arguments, NoCreate} { {
@@ -136,7 +137,7 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
                                  Shaders::PhongGL::NormalMatrix{},
                                  Shaders::PhongGL::Color3{});
 
-    sphere.addVertexBufferInstanced(boxInstanceBuffer, 1, 0,
+    sphere.addVertexBufferInstanced(sphereInstanceBuffer, 1, 0,
                                     Shaders::PhongGL::TransformationMatrix{},
                                     Shaders::PhongGL::NormalMatrix{},
                                     Shaders::PhongGL::Color3{});
@@ -155,26 +156,18 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     bWorld.setDebugDrawer(&debugDraw);
 
     //Create the ground
-    auto *ground = new MBRigidBody{&scene, 0.f, &groundShape, bWorld};
-    new MBDrawable{*ground, boxInstancesDatas, 0xffffff_rgbf, Matrix4::scaling({8.f, .5f, 8.f}), drawableGroup};
+    MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0,0,0}, boxInstancesDatas,
+        drawableGroup, 0xffffff_rgbf, groundShape);
 
-    //MBCubeObject(scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0,0,0}, boxInstancesDatas, drawableGroup, 0xffffff_rgbf, groundShape);
-
-    int nbOfBoxPerSides = 5;
+    int nbOfBoxPerSides = 10;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
     //Create boxes with random colors
     Deg boxHue = 42.0_degf;
     for (Int i = 0; i != nbOfBoxPerSides; ++i) {
         for (Int j = 0; j != nbOfBoxPerSides; ++j) {
             for (Int k = 0; k != nbOfBoxPerSides; ++k) {
-                // auto *o = new MBRigidBody{&scene, 1.f, &boxShape, bWorld};
-                // o->translate({i - centerOffset, j + centerOffset, k - centerOffset});
-                // o->syncPose();
-                //
-                // new MBDrawable{
-                //     *o, boxInstancesDatas, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}),
-                //     Matrix4::scaling(Vector3{.5f}), drawableGroup
-                // };
+                MBCubeObject(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {i - centerOffset, j + centerOffset, k - centerOffset}, boxInstancesDatas,
+                    drawableGroup, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}), boxShape);
             }
         }
     }
@@ -277,26 +270,11 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     const Vector3 direction = (cameraObject->absoluteTransformation().rotationScaling() * Vector3(clickPoint, -1.f)).
             normalized();
 
-    auto *object = new MBRigidBody{
-        &scene,
-        shootBox ? 1.f : 5.f,
-        shootBox ? static_cast<btCollisionShape *>(&boxShape) : &sphereShape,
-        bWorld
-    };
-    object->translate(cameraObject->absoluteTransformation().translation());
-    object->syncPose(); //has to be done explicitly (only done implicitly for kinematic objects)
-
-    //Create the projectile
-    new MBDrawable{
-        *object,
-        shootBox ? boxInstancesDatas : sphereInstancesDatas,
-        shootBox ? 0x880000_rgbf : 0x220000_rgbf,
-        Matrix4::scaling(Vector3{shootBox ? .5f : .25f}),
-        drawableGroup
-    };
+    auto *object = new MBSphereObject(&scene, bWorld, 1.f, Vector3{0.5f},
+        {cameraObject->absoluteTransformation().translation()}, sphereInstancesDatas, drawableGroup, 0x221111_rgbf, sphereShape);//has to be done explicitly (only done implicitly for kinematic objects)
 
     //Set initial velocity
-    object->getRigidBody().setLinearVelocity(btVector3{direction * 25.f});
+    object->getMBRigidBody()->getRigidBody().setLinearVelocity(btVector3{direction * 25.f});
 
     event.setAccepted();
 }

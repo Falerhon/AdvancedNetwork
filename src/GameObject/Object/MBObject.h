@@ -21,12 +21,11 @@ typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 
 class MBObject {
 public:
-    MBObject(Scene3D& scene, btDynamicsWorld& dynamicsWorld, float mass, Vector3 scale, Vector3 location);
+    MBObject(Object3D* scene, btDynamicsWorld& dynamicsWorld, float mass,Vector3 scale, Vector3 location, Containers::Array<InstanceData> &InstanceData, SceneGraph::DrawableGroup3D &DrawableGroup, const Color3 &Color, btCollisionShape &Shape);
 
     virtual ~MBObject() = default;
 
-    virtual void update(float dt);
-    virtual void draw(const Matrix4& projectionMatrix, SceneGraph::Camera3D& camera) = 0;
+    MBRigidBody* getMBRigidBody() const {return _rigidBody;};
 
 protected:
     MBDrawable* _drawableObject;

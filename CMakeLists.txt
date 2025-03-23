@@ -27,7 +27,9 @@ add_executable(MagnumBootstrap
         src/GameObject/Drawable/MBDrawable.cpp
         src/GameObject/Drawable/MBDrawable.h
         src/GameObject/Object/MBCubeObject.cpp
-        src/GameObject/Object/MBCubeObject.h)
+        src/GameObject/Object/MBCubeObject.h
+        src/GameObject/Object/MBSphereObject.cpp
+        src/GameObject/Object/MBSphereObject.h)
 
 target_include_directories(MagnumBootstrap PUBLIC inc)
 set_property(TARGET MagnumBootstrap PROPERTY CXX_STANDARD 20)
