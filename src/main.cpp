@@ -30,19 +30,16 @@
 #include "Magnum/SceneGraph/Scene.h"
 #include "Magnum/Shaders/PhongGL.h"
 #include "Magnum/Trade/MeshData.h"
+#include "entt/entt.hpp"
+#include "GameObject/Drawable/MBDrawable.h"
+#include "GameObject/Object/MBCubeObject.h"
+#include "GameObject/RigidBody/MBRigidBody.h"
 
 using namespace Magnum;
 using namespace Math::Literals;
 
 typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 typedef SceneGraph::Scene<SceneGraph::MatrixTransformation3D> Scene3D;
-
-//TODO : Attributes of the instanced objects
-struct InstanceData {
-    Matrix4 transformationMatrix;
-    Matrix3x3 normalMatrix;
-    Color3 color;
-};
 
 class MyApplication : public Platform::Application {
 public:
@@ -55,6 +52,7 @@ private:
 
     void pointerPressEvent(PointerEvent &event) override;
 
+    //TODO : TRANSFORM INTO CLASSES OR ECS
     //Construct items without initializing them
     GL::Mesh box{NoCreate}, sphere{NoCreate};
     GL::Buffer boxInstanceBuffer{NoCreate}, sphereInstanceBuffer{NoCreate};
@@ -85,64 +83,6 @@ private:
     Object3D *cameraRig, *cameraObject;
 
     bool drawObjects{true}, drawDebug{false}, shootBox{true};
-};
-
-class RigidBody : public Object3D {
-public:
-    RigidBody(Object3D *Parent, Float Mass, btCollisionShape *Shape, btDynamicsWorld &World)
-        : Object3D(Parent), bWorld(World) {
-        //Calculate inertia so the object reacts as it should with the rotation
-        btVector3 inertia{0.f, .0f, .0f};
-        if (!Math::TypeTraits<Float>::equals(Mass, 0.0f))
-            Shape->calculateLocalInertia(Mass, inertia);
-
-        //Set up the RigidBody
-        auto *motionState = new BulletIntegration::MotionState{*this};
-        bRigidBody.emplace(btRigidBody::btRigidBodyConstructionInfo{
-            Mass,
-            &motionState->btMotionState(),
-            Shape,
-            inertia
-        });
-
-        //Prevents the physics engine from deactivating the RBs when it stop moving
-        bRigidBody->forceActivationState(DISABLE_DEACTIVATION);
-
-        bWorld.addRigidBody(bRigidBody.get());
-    }
-
-    ~RigidBody() override {
-        bWorld.removeRigidBody(bRigidBody.get());
-    }
-
-    btRigidBody &getRigidBody() { return *bRigidBody; }
-
-    void syncPose() {
-        bRigidBody->setWorldTransform(btTransform(transformationMatrix()));
-    }
-
-private:
-    btDynamicsWorld &bWorld;
-    Containers::Pointer<btRigidBody> bRigidBody;
-};
-
-class ColoredDrawable : public SceneGraph::Drawable3D {
-public:
-    explicit ColoredDrawable(Object3D &Object, Containers::Array<InstanceData> &InstanceData, const Color3 &Color,
-                             const Matrix4 &PrimitiveTransformation, SceneGraph::DrawableGroup3D &DrawableGroup)
-        : SceneGraph::Drawable3D{Object, &DrawableGroup}, instanceData(InstanceData), color(Color),
-          primitiveTransformation(PrimitiveTransformation) {
-    };
-
-private:
-    void draw(const Matrix4 &transformation, SceneGraph::Camera3D &) override {
-        const Matrix4 t = transformation * primitiveTransformation;
-        arrayAppend(instanceData, InPlaceInit, t, t.normalMatrix(), color);
-    }
-
-    Containers::Array<InstanceData> &instanceData;
-    Color3 color;
-    Matrix4 primitiveTransformation;
 };
 
 MyApplication::MyApplication(const Arguments &arguments): Platform::Application{arguments, NoCreate} { {
@@ -215,8 +155,10 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     bWorld.setDebugDrawer(&debugDraw);
 
     //Create the ground
-    auto *ground = new RigidBody{&scene, 0.f, &groundShape, bWorld};
-    new ColoredDrawable{*ground, boxInstancesDatas, 0xffffff_rgbf, Matrix4::scaling({8.f, .5f, 8.f}), drawableGroup};
+    auto *ground = new MBRigidBody{&scene, 0.f, &groundShape, bWorld};
+    new MBDrawable{*ground, boxInstancesDatas, 0xffffff_rgbf, Matrix4::scaling({8.f, .5f, 8.f}), drawableGroup};
+
+    //MBCubeObject(scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0,0,0}, boxInstancesDatas, drawableGroup, 0xffffff_rgbf, groundShape);
 
     int nbOfBoxPerSides = 5;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
@@ -225,14 +167,14 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     for (Int i = 0; i != nbOfBoxPerSides; ++i) {
         for (Int j = 0; j != nbOfBoxPerSides; ++j) {
             for (Int k = 0; k != nbOfBoxPerSides; ++k) {
-                auto *o = new RigidBody{&scene, 1.f, &boxShape, bWorld};
-                o->translate({i - centerOffset, j + centerOffset, k - centerOffset});
-                o->syncPose();
-
-                new ColoredDrawable{
-                    *o, boxInstancesDatas, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}),
-                    Matrix4::scaling(Vector3{.5f}), drawableGroup
-                };
+                // auto *o = new MBRigidBody{&scene, 1.f, &boxShape, bWorld};
+                // o->translate({i - centerOffset, j + centerOffset, k - centerOffset});
+                // o->syncPose();
+                //
+                // new MBDrawable{
+                //     *o, boxInstancesDatas, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}),
+                //     Matrix4::scaling(Vector3{.5f}), drawableGroup
+                // };
             }
         }
     }
@@ -335,7 +277,7 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     const Vector3 direction = (cameraObject->absoluteTransformation().rotationScaling() * Vector3(clickPoint, -1.f)).
             normalized();
 
-    auto *object = new RigidBody{
+    auto *object = new MBRigidBody{
         &scene,
         shootBox ? 1.f : 5.f,
         shootBox ? static_cast<btCollisionShape *>(&boxShape) : &sphereShape,
@@ -345,7 +287,7 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     object->syncPose(); //has to be done explicitly (only done implicitly for kinematic objects)
 
     //Create the projectile
-    new ColoredDrawable{
+    new MBDrawable{
         *object,
         shootBox ? boxInstancesDatas : sphereInstancesDatas,
         shootBox ? 0x880000_rgbf : 0x220000_rgbf,
@@ -358,5 +300,8 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
 
     event.setAccepted();
 }
+
+
+
 
 MAGNUM_APPLICATION_MAIN(MyApplication)

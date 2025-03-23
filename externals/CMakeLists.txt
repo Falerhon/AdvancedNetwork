@@ -15,3 +15,13 @@ add_subdirectory(bullet)
 add_subdirectory(corrade)
 add_subdirectory(magnum)
 add_subdirectory(magnum-integration)
+
+FetchContent_Declare(
+        entt
+        GIT_REPOSITORY https://github.com/skypjack/entt.git
+        GIT_TAG v3.15.0
+)
+
+FetchContent_MakeAvailable(entt)
+
+set(CMAKE_CXX_STANDARD 20)
