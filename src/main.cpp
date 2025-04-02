@@ -1,6 +1,7 @@
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/Platform/GlfwApplication.h>
 
+
 #include "BulletCollision/BroadphaseCollision/btDbvtBroadphase.h"
 #include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
 #include "BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h"
@@ -10,31 +11,29 @@
 #include "BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h"
 #include "Corrade/Containers/GrowableArray.h"
 #include "Corrade/Containers/Pointer.h"
+#include "entt/entt.hpp"
+#include "GameObject/Drawable/MBDrawable.h"
+#include "GameObject/Object/MBCubeObject.h"
+#include "GameObject/Object/MBSphereObject.h"
+#include "GameObject/RigidBody/MBRigidBody.h"
 #include "Magnum/Timeline.h"
 #include "Magnum/BulletIntegration/DebugDraw.h"
-#include "Magnum/BulletIntegration/MotionState.h"
 #include "Magnum/GL/Mesh.h"
 #include "Magnum/GL/Renderer.h"
 #include "Magnum/Math/Color.h"
 #include "Magnum/Math/Matrix4.h"
 #include "Magnum/Math/Time.h"
 #include "Magnum/MeshTools/Compile.h"
-#include "Magnum/Primitives/Axis.h"
 #include "Magnum/Primitives/Cube.h"
 #include "Magnum/Primitives/UVSphere.h"
 #include "Magnum/SceneGraph/Camera.h"
-#include "Magnum/SceneGraph/Drawable.h"
 #include "Magnum/SceneGraph/FeatureGroup.h"
 #include "Magnum/SceneGraph/MatrixTransformation3D.h"
 #include "Magnum/SceneGraph/Object.h"
 #include "Magnum/SceneGraph/Scene.h"
 #include "Magnum/Shaders/PhongGL.h"
 #include "Magnum/Trade/MeshData.h"
-#include "entt/entt.hpp"
-#include "GameObject/Drawable/MBDrawable.h"
-#include "GameObject/Object/MBCubeObject.h"
-#include "GameObject/Object/MBSphereObject.h"
-#include "GameObject/RigidBody/MBRigidBody.h"
+#include "enet6/enet.h"
 
 using namespace Magnum;
 using namespace Math::Literals;

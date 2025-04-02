@@ -24,4 +24,13 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(entt)
 
+FetchContent_Declare(
+        enet
+        GIT_REPOSITORY https://github.com/VALERE91/enet6.git
+        GIT_TAG main
+)
+
+FetchContent_MakeAvailable(enet)
+
+
 set(CMAKE_CXX_STANDARD 20)

@@ -50,3 +50,13 @@ target_link_libraries(MagnumBootstrap PRIVATE
         LinearMath
         Bullet3Common)
 target_link_libraries(MagnumBootstrap PUBLIC EnTT::EnTT)
+
+
+target_link_libraries(MagnumBootstrap PUBLIC enet)
+
+# Link platform-specific networking libraries
+if(WIN32)
+    target_link_libraries(MagnumBootstrap PRIVATE ws2_32)
+else()
+    target_link_libraries(MagnumBootstrap PRIVATE pthread)
+endif()
