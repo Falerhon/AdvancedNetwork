@@ -14,6 +14,7 @@ namespace CUBEGAMEAPI.Models
         public int CurrentPlayers { get; set; }
 
         public bool IsOnline { get; set; }
+        public bool IsOccupied { get; set; }
         public DateTime LastHeartbeat { get; set; }
     }
 }

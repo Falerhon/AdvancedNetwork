@@ -10,21 +10,10 @@ namespace CUBEGAMEAPI.Services
     
     public class MatchmakingService : IMatchmakingService
     {
-        private readonly UserDb _context;
         private readonly List<MatchmakingEntry> _queue = new();
     
-        public MatchmakingService(UserDb context)
+        public void EnqueuePlayer(int userId, float score)
         {
-            _context = context;
-        }
-    
-        public void EnqueuePlayer(int userId)
-        {
-            var stats = _context.Stats.FirstOrDefault(p => p.Id == userId);
-            if (stats == null) return;
-    
-            var score = CalculateScore(stats);
-    
             lock (_queue)
             {
                 _queue.Add(new MatchmakingEntry
@@ -35,52 +24,33 @@ namespace CUBEGAMEAPI.Services
             }
         }
     
-        public void ProcessMatchmaking()
+        public List<int> ProcessMatchmaking()
         {
+            var matchedUsers = new List<int>();
             lock (_queue)
             {
+                //Sort the queue so the players have a similar score
                 var sorted = _queue.OrderBy(q => q.MatchmakingScore).ToList();
     
                 //Do we have at least 4 players
-                while (sorted.Count >= 4)
+                if (sorted.Count >= 4)
                 {
                     var group = sorted.Take(4).ToList();
                     //Get the list of ID's for the queued players
-                    AssignPlayersToGameServer(group.Select(p => p.UserId).ToList());
-                    //Remove the 4 players we just sent in a server
-                    sorted = sorted.Skip(4).ToList();
-                    _queue.RemoveAll(p => group.Contains(p));
+                    matchedUsers = group.Select(p => p.UserId).ToList();
                 }
             }
+
+            return matchedUsers;
         }
-    
-        private void AssignPlayersToGameServer(List<int> userIds)
+
+        public void RemoveFromMatchmaking(List<int> IDs)
         {
-            var Server = _context.GameServers
-                .FirstOrDefault(s => s.CurrentPlayers < s.MaxPlayers);
-            
-            if(Server == null)
-                return;
-            
-            LobbyModel lobby = new LobbyModel();
-            lobby.userIds = userIds;
-            lobby.ServerId = Server.Id;
-            
-            _context.Lobby.Add(lobby);
-        }
-    
-        private float CalculateScore(PlayerStatsModel stats)
-        {
-            float score = 0;
-            if (stats.GamesPlayed <= 0)
+            lock (_queue)
             {
-                score = 1;
+                //Remove the players we just sent in a server
+                _queue.RemoveAll(p => IDs.Contains(p.UserId));
             }
-            else
-            {
-                score = ((stats.GamesWon * 10) / stats.GamesPlayed) + stats.CurrentWinStreak * 5;
-            }
-            return score;
         }
     }
 }

@@ -48,7 +48,7 @@ builder.Services.AddScoped<IStatService, StatService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<IGameServerService, GameServerService>();
 builder.Services.AddScoped<IGameServerAuthService, GameServerAuthService>();
-builder.Services.AddScoped<IMatchmakingService, MatchmakingService>();
+builder.Services.AddSingleton<IMatchmakingService, MatchmakingService>();
 
 builder.Services.AddAuthorization();
 

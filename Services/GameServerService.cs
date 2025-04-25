@@ -21,6 +21,7 @@ namespace CUBEGAMEAPI.Services
                 existing.MaxPlayers = server.MaxPlayers;
                 existing.CurrentPlayers = server.CurrentPlayers;
                 existing.IsOnline = true;
+                existing.IsOccupied = false;
                 existing.LastHeartbeat = DateTime.UtcNow;
             }
             else
@@ -44,6 +45,32 @@ namespace CUBEGAMEAPI.Services
             {
                 server.IsOnline = false;
             }
+
+            _context.SaveChanges();
+        }
+
+        //Update weather or not the server is currently hosting a game
+        public void MarkAsOccupied(GameServer server, bool occupied)
+        {
+            var serv = _context.GameServers
+                .FirstOrDefault(s => s.IP == server.IP && s.Port == server.Port);
+            
+            if(serv == null)
+                return;
+
+            serv.IsOccupied = occupied;
+            _context.SaveChanges();
+        }
+
+        //Delete the lobby linked to the server id
+        public void RemoveLobby(int serverId)
+        {
+            var lobby = _context.Lobby.FirstOrDefault(l => l.ServerId == serverId);
+            
+            if(lobby == null)
+                return;
+
+            _context.Remove(lobby);
 
             _context.SaveChanges();
         }

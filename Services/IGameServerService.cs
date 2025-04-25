@@ -5,5 +5,7 @@ namespace CUBEGAMEAPI.Services
     public interface IGameServerService
     {
         void RegisterOrUpdate(GameServer server);
+        void MarkAsOccupied(GameServer server, bool occupied);
+        void RemoveLobby(int serverId);
     }
 }
