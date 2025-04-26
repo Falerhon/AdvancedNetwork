@@ -60,3 +60,5 @@ if(WIN32)
 else()
     target_link_libraries(MagnumBootstrap PRIVATE pthread)
 endif()
+
+add_subdirectory(samples)

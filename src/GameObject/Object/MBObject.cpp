@@ -37,8 +37,7 @@ void MBObject::SerializeObject(std::ofstream &outStream) const {
     int32_t pX = position.x() * PRECISIONMULTIPLIER;
     int32_t pY = position.y() * PRECISIONMULTIPLIER;
     int32_t pZ = position.z() * PRECISIONMULTIPLIER;
-    std::cout << "posx : " << _rigidBody->GetPosition().x() << " posy : " << _rigidBody->GetPosition().y() << " posz : " << _rigidBody->GetPosition().z() << std::endl;
-    std::cout << "px : " << pX << " py : " << pY << " pz : " << pZ << std::endl;
+
     outStream.write(reinterpret_cast<const char *>(&pX), sizeof(int32_t));
     outStream.write(reinterpret_cast<const char *>(&pY), sizeof(int32_t));
     outStream.write(reinterpret_cast<const char *>(&pZ), sizeof(int32_t));
@@ -159,8 +158,6 @@ void MBObject::DeserializeObject(std::ifstream &inStream) {
     uint32_t color;
     inStream.read(reinterpret_cast<char *>(&color), sizeof(uint32_t));
 
-    std::cout << " BEFORE : x - " << _rigidBody->GetPosition().x() << " y - " << _rigidBody->GetPosition().y() << " z - " << _rigidBody->GetPosition().z() << std::endl;
-    std::cout << " values : x - " << posX << " y - " << posY << " z - " << posZ << std::endl;
     Quaternion translatedQuat;
     translatedQuat.xyzw().x() = quat.x;
     translatedQuat.xyzw().y() = quat.y;
@@ -168,8 +165,6 @@ void MBObject::DeserializeObject(std::ifstream &inStream) {
     translatedQuat.xyzw().w() = quat.w;
 
     _rigidBody->SetTransform(Vector3(posX, posY, posZ),translatedQuat, Vector3(scaleX, scaleY, scaleZ));
-
-    std::cout << " AFTER : x - " << _rigidBody->GetPosition().x() << " y - " << _rigidBody->GetPosition().y() << " z - " << _rigidBody->GetPosition().z() << std::endl;
 
     Color3 linearColor = Color3::fromSrgb(color);
     _drawableObject->SetColor(linearColor);
