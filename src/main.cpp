@@ -36,6 +36,10 @@
 #include "Magnum/Shaders/PhongGL.h"
 #include "Magnum/Trade/MeshData.h"
 #include "enet6/enet.h"
+#include "Network/APIHandler.h"
+
+//TODO : SET THE ONLINE SERVE URL
+#define OnlineServerUrl "http://localhost:5039"
 
 using namespace Magnum;
 using namespace Math::Literals;
@@ -91,6 +95,8 @@ private:
     Object3D *cameraRig, *cameraObject;
 
     bool drawObjects{true}, drawDebug{false}, shootBox{false};
+
+    APIHandler* API;
 };
 
 MyApplication::MyApplication(const Arguments &arguments): Platform::Application{arguments, NoCreate} { {
@@ -106,6 +112,9 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
             create(conf, glConf.setSampleCount(0)); //Set the samples to 0 if unsupported
         }
     }
+
+    //API set up
+    API = new APIHandler(OnlineServerUrl);
 
     //Camera set up
     cameraRig = new Object3D{&scene};
@@ -269,6 +278,19 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
     } else if (event.key() == Key::L) {
         std::string filename = "../SaveFile.bin";
         LoadWorldState(objects, filename);
+    } else if (event.key() == Key::O) {
+        if (API->login("bat", "man")) {
+            Debug{} << "Login successfull";
+        } else {
+            Error{} << "Login failed";
+        }
+    } else if (event.key() == Key::P) {
+        auto response = API->get("/api/Stats/info");
+        if (response.status_code == 200) {
+            Debug{} << "Stats request successful";
+        } else {
+            Error{} << "Failed to request stats : " << response.status_code;
+        }
     }
 
     event.setAccepted();
