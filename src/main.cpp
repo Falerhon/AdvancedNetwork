@@ -1,3 +1,5 @@
+#include <fstream>
+#include <iostream>
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/Platform/GlfwApplication.h>
 
@@ -52,6 +54,10 @@ private:
 
     void pointerPressEvent(PointerEvent &event) override;
 
+    void SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename);
+
+    void LoadWorldState(std::vector<MBObject *> &objects, const std::string &filename);
+
     //TODO : TRANSFORM INTO CLASSES OR ECS
     //Construct items without initializing them
     GL::Mesh box{NoCreate}, sphere{NoCreate};
@@ -79,6 +85,8 @@ private:
     SceneGraph::Camera3D *camera;
     SceneGraph::DrawableGroup3D drawableGroup;
     Timeline timeline;
+
+    std::vector<MBObject *> objects;
 
     Object3D *cameraRig, *cameraObject;
 
@@ -155,18 +163,22 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     bWorld.setDebugDrawer(&debugDraw);
 
     //Create the ground
-    MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0,0,0}, boxInstancesDatas,
-        drawableGroup, 0xffffff_rgbf, groundShape);
+    MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0, 0, 0}, boxInstancesDatas,
+                 drawableGroup, 0xffffff_rgbf, groundShape);
 
-    int nbOfBoxPerSides = 10;
+    int nbOfBoxPerSides = 2;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
     //Create boxes with random colors
     Deg boxHue = 42.0_degf;
     for (Int i = 0; i != nbOfBoxPerSides; ++i) {
         for (Int j = 0; j != nbOfBoxPerSides; ++j) {
             for (Int k = 0; k != nbOfBoxPerSides; ++k) {
-                MBCubeObject(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {i - centerOffset, j + centerOffset, k - centerOffset}, boxInstancesDatas,
-                    drawableGroup, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}), boxShape);
+                MBCubeObject *cube = new MBCubeObject(&scene, bWorld, 1.f, {.5f, .5f, .5f},
+                                                      {i - centerOffset, j + centerOffset, k - centerOffset},
+                                                      boxInstancesDatas,
+                                                      drawableGroup, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}),
+                                                      boxShape);
+                objects.emplace_back(cube);
             }
         }
     }
@@ -251,6 +263,12 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
         cameraObject->translate(Vector3({0.f, 5.f, 0.f}));
     } else if (event.key() == Key::E) {
         cameraObject->translate(Vector3({0.f, -5.f, 0.f}));
+    } else if (event.key() == Key::K) {
+        std::string filename = "../SaveFile.bin";
+        SaveWorldState(objects, filename);
+    } else if (event.key() == Key::L) {
+        std::string filename = "../SaveFile.bin";
+        LoadWorldState(objects, filename);
     }
 
     event.setAccepted();
@@ -270,7 +288,10 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
             normalized();
 
     auto *object = new MBSphereObject(&scene, bWorld, 1.f, Vector3{0.5f},
-        {cameraObject->absoluteTransformation().translation()}, sphereInstancesDatas, drawableGroup, 0x221111_rgbf, sphereShape);//has to be done explicitly (only done implicitly for kinematic objects)
+                                      {cameraObject->absoluteTransformation().translation()}, sphereInstancesDatas,
+                                      drawableGroup, 0x221111_rgbf,
+                                      sphereShape);
+    //has to be done explicitly (only done implicitly for kinematic objects)
 
     //Set initial velocity
     object->getMBRigidBody()->getRigidBody().setLinearVelocity(btVector3{direction * 25.f});
@@ -278,7 +299,25 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     event.setAccepted();
 }
 
+void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename) {
+    std::ofstream saveFile(filename);
+    for (auto object: objects) {
+        std::cout << "Saving " << object << std::endl;
+        object->SerializeObject(saveFile);
+    }
 
+    saveFile.close();
+}
+
+void MyApplication::LoadWorldState(std::vector<MBObject *> &objects, const std::string &filename) {
+    std::ifstream saveFile(filename);
+    for (auto object: objects) {
+        std::cout << "Loading " << object << std::endl;
+        object->DeserializeObject(saveFile);
+    }
+
+    saveFile.close();
+}
 
 
 MAGNUM_APPLICATION_MAIN(MyApplication)

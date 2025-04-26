@@ -4,11 +4,13 @@
 
 #include "MBRigidBody.h"
 
+#include <iostream>
+#include <ostream>
 #include <Magnum/BulletIntegration/Integration.h>
 #include <Magnum/BulletIntegration/MotionState.h>
 
 MBRigidBody::MBRigidBody(Object3D *Parent, Float Mass, btCollisionShape *Shape, btDynamicsWorld &World)
-        : Object3D(Parent), bWorld(World) {
+    : Object3D(Parent), bWorld(World) {
     //Calculate inertia so the object reacts as it should with the rotation
     btVector3 inertia{0.f, .0f, .0f};
     if (!Math::TypeTraits<Float>::equals(Mass, 0.0f))
@@ -31,6 +33,74 @@ MBRigidBody::MBRigidBody(Object3D *Parent, Float Mass, btCollisionShape *Shape, 
 
 MBRigidBody::~MBRigidBody() {
     bWorld.removeRigidBody(bRigidBody.get());
+}
+
+Vector3 MBRigidBody::GetPosition() {
+    btTransform trans;
+    bRigidBody->getMotionState()->getWorldTransform(trans);
+    btVector3 position = trans.getOrigin();
+    return {position.x(), position.y(), position.z()};
+}
+
+void MBRigidBody::SetPosition(Vector3 newPosition) {
+    std::cout << "pos to set " << newPosition.x() << " " << newPosition.y() << " " << newPosition.z() << std::endl;
+    bWorld.removeRigidBody(bRigidBody.get());
+
+    bRigidBody->setGravity(bWorld.getGravity());
+    bRigidBody->clearForces();
+    bRigidBody->setLinearVelocity(btVector3(0, 0, 0));
+    bRigidBody->setAngularVelocity(btVector3(0, 0, 0));
+
+    btTransform t;
+    t.setOrigin(btVector3(newPosition.x(), newPosition.y(), newPosition.z()));
+
+    bRigidBody->setWorldTransform(t);
+    if (bRigidBody->getMotionState()) {
+        bRigidBody->getMotionState()->setWorldTransform(t);
+    }
+
+    bRigidBody->setGravity(bWorld.getGravity());
+    bWorld.addRigidBody(bRigidBody.get());
+    bRigidBody->activate();
+
+    std::cout << "updated pos " << GetPosition().x() <<  " " << GetPosition().y() << " " << GetPosition().z() << std::endl;
+}
+
+Quaternion MBRigidBody::GetRotation() {
+    btTransform trans;
+    bRigidBody->getMotionState()->getWorldTransform(trans);
+    btQuaternion rot = trans.getRotation();
+    return Quaternion(rot);
+}
+
+void MBRigidBody::SetRotation(Quaternion newRotation) {
+    bWorld.removeRigidBody(bRigidBody.get());
+
+    bRigidBody->setGravity(bWorld.getGravity());
+    bRigidBody->clearForces();
+    bRigidBody->setLinearVelocity(btVector3(0, 0, 0));
+    bRigidBody->setAngularVelocity(btVector3(0, 0, 0));
+
+    btTransform t;
+    t.setRotation(btQuaternion(newRotation.xyzw().x(), newRotation.xyzw().y(), newRotation.xyzw().z(), newRotation.xyzw().w()));
+
+    bRigidBody->setWorldTransform(t);
+    if (bRigidBody->getMotionState()) {
+        bRigidBody->getMotionState()->setWorldTransform(t);
+    }
+
+    bWorld.addRigidBody(bRigidBody.get());
+    bRigidBody->activate();
+}
+
+Vector3 MBRigidBody::GetScale() {
+    btVector3 scale = bRigidBody->getCollisionShape()->getLocalScaling();
+    return {scale.x(), scale.y(), scale.z()};
+}
+
+void MBRigidBody::SetScale(Vector3 newScale) {
+    btCollisionShape *shape = bRigidBody->getCollisionShape();
+    shape->setLocalScaling(btVector3(newScale.x(), newScale.y(), newScale.z()));
 }
 
 void MBRigidBody::syncPose() {

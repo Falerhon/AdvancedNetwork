@@ -28,6 +28,15 @@ public:
 
     btRigidBody &getRigidBody() { return *bRigidBody; }
 
+    Vector3 GetPosition();
+    void SetPosition(Vector3 newPosition);
+
+    Quaternion GetRotation();
+    void SetRotation(Quaternion newRotation);
+
+    Vector3 GetScale();
+    void SetScale(Vector3 newScale);
+
     void syncPose();
 
 private:

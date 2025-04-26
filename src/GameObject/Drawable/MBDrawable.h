@@ -27,10 +27,13 @@ typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 class MBDrawable : public SceneGraph::Drawable3D {
 public:
     explicit MBDrawable(Object3D &Object, Containers::Array<InstanceData> &InstanceData, const Color3 &Color,
-                             const Matrix4 &PrimitiveTransformation, SceneGraph::DrawableGroup3D &DrawableGroup)
+                        const Matrix4 &PrimitiveTransformation, SceneGraph::DrawableGroup3D &DrawableGroup)
         : SceneGraph::Drawable3D{Object, &DrawableGroup}, instanceData(InstanceData), color(Color),
           primitiveTransformation(PrimitiveTransformation) {
     };
+
+    Color3 getColor() const { return color; }
+    void SetColor(Color3 color) { this->color = color; }
 
 private:
     void draw(const Matrix4 &transformation, SceneGraph::Camera3D &) override;
@@ -39,7 +42,6 @@ private:
     Color3 color;
     Matrix4 primitiveTransformation;
 };
-
 
 
 #endif //MBDRAWABLE_H
