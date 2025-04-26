@@ -161,14 +161,13 @@ void MBObject::DeserializeObject(std::ifstream &inStream) {
 
     std::cout << " BEFORE : x - " << _rigidBody->GetPosition().x() << " y - " << _rigidBody->GetPosition().y() << " z - " << _rigidBody->GetPosition().z() << std::endl;
     std::cout << " values : x - " << posX << " y - " << posY << " z - " << posZ << std::endl;
-    _rigidBody->SetPosition(Vector3(posX, posY, posZ));
-    _rigidBody->SetScale(Vector3(sX, sY, sZ));
     Quaternion translatedQuat;
     translatedQuat.xyzw().x() = quat.x;
     translatedQuat.xyzw().y() = quat.y;
     translatedQuat.xyzw().z() = quat.z;
     translatedQuat.xyzw().w() = quat.w;
-    _rigidBody->SetRotation(translatedQuat);
+
+    _rigidBody->SetTransform(Vector3(posX, posY, posZ),translatedQuat, Vector3(scaleX, scaleY, scaleZ));
 
     std::cout << " AFTER : x - " << _rigidBody->GetPosition().x() << " y - " << _rigidBody->GetPosition().y() << " z - " << _rigidBody->GetPosition().z() << std::endl;
 
