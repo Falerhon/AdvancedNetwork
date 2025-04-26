@@ -29,7 +29,9 @@ add_executable(MagnumBootstrap
         src/GameObject/Object/MBCubeObject.cpp
         src/GameObject/Object/MBCubeObject.h
         src/GameObject/Object/MBSphereObject.cpp
-        src/GameObject/Object/MBSphereObject.h)
+        src/GameObject/Object/MBSphereObject.h
+        src/Network/APIHandler.cpp
+        src/Network/APIHandler.h)
 
 target_include_directories(MagnumBootstrap PUBLIC inc)
 set_property(TARGET MagnumBootstrap PROPERTY CXX_STANDARD 20)
@@ -53,6 +55,9 @@ target_link_libraries(MagnumBootstrap PUBLIC EnTT::EnTT)
 
 
 target_link_libraries(MagnumBootstrap PUBLIC enet)
+
+target_link_libraries(MagnumBootstrap PRIVATE cpr::cpr)
+target_link_libraries(MagnumBootstrap PRIVATE nlohmann_json::nlohmann_json)
 
 # Link platform-specific networking libraries
 if(WIN32)
