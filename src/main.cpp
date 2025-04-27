@@ -40,6 +40,7 @@
 #include "enet6/enet.h"
 #include "Network/APIHandler.h"
 #include "GameObject//Drawable/MBUiRenderer.h"
+#include "Network/LinkingContext.h"
 #include "Network/MatchmakingManager.h"
 
 //TODO : SET THE ONLINE SERVE URL
@@ -64,7 +65,7 @@ private:
 
     void keyReleaseEvent(KeyEvent &event) override;
 
-    void textInputEvent(TextInputEvent& event) override;
+    void textInputEvent(TextInputEvent &event) override;
 
     void pointerMoveEvent(PointerMoveEvent &event) override;
 
@@ -111,15 +112,15 @@ private:
     Object3D *cameraRig, *cameraObject;
 
     ImGuiIntegration::Context _imguiContext{NoCreate};
-    MatchmakingManager* _matchmaking;
+    MatchmakingManager *_matchmaking;
 
-    UiRenderer* _uiRenderer;
+    UiRenderer *_uiRenderer;
     //Game state to track which UI to use
     GameState _gameState;
 
     bool drawObjects{true}, drawDebug{false}, shootBox{false};
 
-    APIHandler* API;
+    APIHandler *API;
 };
 
 MyApplication::MyApplication(const Arguments &arguments): Platform::Application{arguments, NoCreate} { {
@@ -138,6 +139,9 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
 
     //API set up
     API = new APIHandler(OnlineServerUrl);
+
+    //Linking Context
+    LinkingContext* linking_context = new LinkingContext();
 
     _uiRenderer = new UiRenderer(API);
     _gameState = GameState::Login;
@@ -197,6 +201,8 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     bWorld.setGravity({.0f, -10.f, .0f});
     bWorld.setDebugDrawer(&debugDraw);
 
+    //Spawn of ground and cubes
+#ifdef IS_SERVER
     //Create the ground
     MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0, 0, 0}, boxInstancesDatas,
                  drawableGroup, 0xffffff_rgbf, groundShape);
@@ -213,21 +219,25 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
                                                       boxInstancesDatas,
                                                       drawableGroup, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}),
                                                       boxShape);
+                cube->SetNetworkId(linking_context->Register(cube));
                 objects.emplace_back(cube);
             }
         }
     }
+#endif
+
+#ifdef IS_CLIENT
 
     //imGui set up
-    _imguiContext = ImGuiIntegration::Context(Vector2(windowSize()/dpiScaling()),
-                                        windowSize(), framebufferSize());
+    _imguiContext = ImGuiIntegration::Context(Vector2(windowSize() / dpiScaling()),
+                                              windowSize(), framebufferSize());
+    GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
+                                   GL::Renderer::BlendEquation::Add);
+    GL::Renderer::setBlendFunction(GL::Renderer::BlendFunction::SourceAlpha,
+                                   GL::Renderer::BlendFunction::OneMinusSourceAlpha);
+#endif
 
     _matchmaking = new MatchmakingManager(API);
-
-    GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
-        GL::Renderer::BlendEquation::Add);
-    GL::Renderer::setBlendFunction(GL::Renderer::BlendFunction::SourceAlpha,
-        GL::Renderer::BlendFunction::OneMinusSourceAlpha);
 
     // Loop at 60 Hz max
     setSwapInterval(1);
@@ -243,10 +253,14 @@ void MyApplication::tickEvent() {
     if (_gameState == GameState::LookingForSession)
         _matchmaking->update();
 
+#ifdef IS_CLIENT
     redraw();
+#endif
 }
 
 void MyApplication::drawEvent() {
+#ifdef IS_CLIENT
+
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
     //Remove any object far from the origin
@@ -305,9 +319,9 @@ void MyApplication::drawEvent() {
     if (newState.has_value())
         _gameState = newState.value();
 
-    if(ImGui::GetIO().WantTextInput && !isTextInputActive())
+    if (ImGui::GetIO().WantTextInput && !isTextInputActive())
         startTextInput();
-    else if(!ImGui::GetIO().WantTextInput && isTextInputActive())
+    else if (!ImGui::GetIO().WantTextInput && isTextInputActive())
         stopTextInput();
 
     //Sets the renderer for 2d rendering
@@ -328,10 +342,10 @@ void MyApplication::drawEvent() {
     GL::Renderer::disable(GL::Renderer::Feature::Blending);
 
     swapBuffers();
+#endif
 }
 
 void MyApplication::keyPressEvent(KeyEvent &event) {
-
     if (_gameState != GameState::InGame) {
         _imguiContext.handleKeyPressEvent(event);
         event.setAccepted();
@@ -371,15 +385,15 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
 }
 
 void MyApplication::keyReleaseEvent(KeyEvent &event) {
-    if(_imguiContext.handleKeyReleaseEvent(event)) return;
+    if (_imguiContext.handleKeyReleaseEvent(event)) return;
 }
 
 void MyApplication::textInputEvent(TextInputEvent &event) {
-        if(_imguiContext.handleTextInputEvent(event)) return;
+    if (_imguiContext.handleTextInputEvent(event)) return;
 }
 
-void MyApplication::pointerMoveEvent(PointerMoveEvent& event) {
-    if(_imguiContext.handlePointerMoveEvent(event)) return;
+void MyApplication::pointerMoveEvent(PointerMoveEvent &event) {
+    if (_imguiContext.handlePointerMoveEvent(event)) return;
 }
 
 void MyApplication::pointerPressEvent(PointerEvent &event) {
@@ -393,6 +407,8 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
         return;
     }
 
+    //Spawn the projectile
+#ifdef IS_SERVER
     //Scale the position from relative to the window size to relative to the framebuffer size
     //Since the HiDPI can vary
     const Vector2 position = event.position() * Vector2{framebufferSize()} / Vector2{windowSize()};
@@ -410,19 +426,22 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     //Set initial velocity
     object->getMBRigidBody()->getRigidBody().setLinearVelocity(btVector3{direction * 25.f});
 
+    object->SetNetworkId(linking_context->Register(object));
     //Add to snapshot
     objects.push_back(object);
 
+#endif
     event.setAccepted();
 }
 
-void MyApplication::pointerReleaseEvent(PointerEvent& event) {
-    if(_imguiContext.handlePointerReleaseEvent(event)) return;
+void MyApplication::pointerReleaseEvent(PointerEvent &event) {
+    if (_imguiContext.handlePointerReleaseEvent(event)) return;
 }
 
 void MyApplication::viewportEvent(ViewportEvent &event) {
     GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
-    _imguiContext.relayout(Vector2{event.windowSize()}/event.dpiScaling(), event.windowSize(), event.framebufferSize());
+    _imguiContext.relayout(Vector2{event.windowSize()} / event.dpiScaling(), event.windowSize(),
+                           event.framebufferSize());
 }
 
 void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename) {

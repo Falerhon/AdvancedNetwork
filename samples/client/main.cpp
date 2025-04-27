@@ -43,7 +43,7 @@ int main() {
     }
 
     while (true) {
-        if (enet_host_service(client, &event, 100) > 0) {
+        if (enet_host_service(client, &event, 1000) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT:
                     enet_address_get_host_ip(&event.peer->address, addressBuffer, ENET_ADDRESS_MAX_LENGTH);
@@ -66,8 +66,23 @@ int main() {
                     break;
             }
         }
-    }
+        else if (server->state == ENET_PEER_STATE_CONNECTED) //Quick ping to avoid timeout
+        {
 
+            std::string packetMsg = "packet";
+            if (strlen(buffer) > 0 && strcmp(buffer, "\n") != 0)
+            {
+                /* Build a packet passing our bytes, length and flags (reliable means this packet will be resent if lost) */
+                ENetPacket* packet = enet_packet_create(packetMsg.data(), strlen(packetMsg.data()) + 1, ENET_PACKET_FLAG_RELIABLE);
+                /* Send the packet to the server on channel 0 */
+                enet_peer_send(server, 0, packet);
+            }
+            else
+            {
+                enet_peer_disconnect_now(server, 0);
+            }
+        }
+    }
 
     return EXIT_SUCCESS;
 }

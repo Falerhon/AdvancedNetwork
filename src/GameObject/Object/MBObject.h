@@ -18,6 +18,12 @@ using namespace Math::Literals;
 typedef SceneGraph::Scene<SceneGraph::MatrixTransformation3D> Scene3D;
 typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 
+enum class NetworkClassID : uint8_t {
+    INVALID = 0,
+    MBCube,
+    MBSphere
+};
+
 struct QuaternionFloat {
     float x,y,z,w;
 
@@ -33,11 +39,16 @@ public:
 
     virtual ~MBObject() = default;
 
+    virtual NetworkClassID GetClassId() const = 0;
+
     virtual void SerializeObject(std::ofstream& outStream) const;
     virtual void DeserializeObject(std::ifstream& inStream);
 
     MBRigidBody* getMBRigidBody() const {return _rigidBody; }
     MBDrawable* getMBDrawable() const {return _drawableObject; }
+
+    void SetNetworkId(uint32_t networkID) { _networkID = networkID; }
+    uint32_t GetNetworkId() const { return _networkID; }
 
 protected:
     MBDrawable* _drawableObject;
@@ -46,6 +57,7 @@ protected:
 private:
     static QuaternionFloat MatrixToQuat(Matrix3x3 matrix);
     Matrix3x3 QuatToMatrix(QuaternionFloat quat) const;
+    uint32_t _networkID;
 };
 
 

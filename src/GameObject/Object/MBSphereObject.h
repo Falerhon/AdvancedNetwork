@@ -8,9 +8,13 @@
 #include "MBObject.h"
 #include "Magnum/GL/Mesh.h"
 
-class MBSphereObject : public MBObject{
-    public:
-    MBSphereObject(Object3D* scene, btDynamicsWorld& world, float mass, Vector3 scale, Vector3 location, Containers::Array<InstanceData> &InstanceData, SceneGraph::DrawableGroup3D &DrawableGroup, const Color3 &Color, btSphereShape &Shape);
+class MBSphereObject : public MBObject {
+public:
+    MBSphereObject(Object3D *scene, btDynamicsWorld &world, float mass, Vector3 scale, Vector3 location,
+                   Containers::Array<InstanceData> &InstanceData, SceneGraph::DrawableGroup3D &DrawableGroup,
+                   const Color3 &Color, btSphereShape &Shape);
+
+    virtual NetworkClassID GetClassId() const override { return NetworkClassID::MBSphere; }
 };
 
 #endif //MBSPHEREOBJECT_H
