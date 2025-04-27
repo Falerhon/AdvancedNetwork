@@ -42,7 +42,7 @@ int main() {
     std::cout << "Server started on port " << SERVER_PORT << std::endl;
 
     while (true) {
-        if (enet_host_service(server, &event, 100) > 0) {
+        if (enet_host_service(server, &event, 1000) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT:
                     enet_address_get_host_ip(&event.peer->address, addressBuffer, ENET_ADDRESS_MAX_LENGTH);
@@ -50,10 +50,8 @@ int main() {
                     break;
 
                 case ENET_EVENT_TYPE_RECEIVE:
-                    std::cout << "Received packet of size "
-                            << event.packet->dataLength
-                            << " on channel " << (int) event.channelID
-                            << std::endl;
+                    std::cout << "Received packet of size " << event.packet->dataLength << " on channel " << (int) event
+                            .channelID  << " from " << event.peer->address.port << " : " << event.packet->data << std::endl;
 
                     // Echo back the received packet
                     enet_host_broadcast(server, 0, event.packet);

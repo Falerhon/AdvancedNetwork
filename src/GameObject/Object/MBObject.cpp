@@ -32,6 +32,14 @@ MBObject::MBObject(Object3D *scene, btDynamicsWorld &dynamicsWorld, float mass, 
 }
 
 void MBObject::SerializeObject(std::ofstream &outStream) const {
+    //********* Write NetworkID *********//
+    uint32_t netID = GetNetworkId();
+    outStream.write(reinterpret_cast<const char *>(&netID), sizeof(uint32_t));
+
+    //********* Write ClassID *********//
+    NetworkClassID classID = GetClassId();
+    outStream.write(reinterpret_cast<const char *>(&classID), sizeof(NetworkClassID));
+
     //********* Write position *********//
     Vector3 position = _rigidBody->GetPosition();
     int32_t pX = position.x() * PRECISIONMULTIPLIER;
@@ -109,6 +117,14 @@ void MBObject::SerializeObject(std::ofstream &outStream) const {
 }
 
 void MBObject::DeserializeObject(std::ifstream &inStream) {
+    //NetworkID
+    uint32_t netID;
+    inStream.read(reinterpret_cast<char *>(&netID), sizeof(uint32_t));
+
+    //ClassID
+    NetworkClassID classID;
+    inStream.read(reinterpret_cast<char *>(&classID), sizeof(NetworkClassID));
+
     //Position
     int32_t pX;
     int32_t pY;
