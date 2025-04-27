@@ -140,7 +140,7 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     API = new APIHandler(OnlineServerUrl);
 
     //Linking Context
-    LinkingContext* linking_context = new LinkingContext();
+    LinkingContext *linking_context = new LinkingContext();
 
     _uiRenderer = new UiRenderer(API);
     _gameState = GameState::Login;
@@ -345,11 +345,13 @@ void MyApplication::drawEvent() {
 }
 
 void MyApplication::keyPressEvent(KeyEvent &event) {
+#ifdef IS_CLIENT
     if (_gameState != GameState::InGame) {
         _imguiContext.handleKeyPressEvent(event);
         event.setAccepted();
         return;
     }
+#endif
 
 
     //Movement
@@ -384,15 +386,21 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
 }
 
 void MyApplication::keyReleaseEvent(KeyEvent &event) {
+#ifdef IS_CLIENT
     if (_imguiContext.handleKeyReleaseEvent(event)) return;
+#endif
 }
 
 void MyApplication::textInputEvent(TextInputEvent &event) {
+#ifdef IS_CLIENT
     if (_imguiContext.handleTextInputEvent(event)) return;
+#endif
 }
 
 void MyApplication::pointerMoveEvent(PointerMoveEvent &event) {
+#ifdef IS_CLIENT
     if (_imguiContext.handlePointerMoveEvent(event)) return;
+#endif
 }
 
 void MyApplication::pointerPressEvent(PointerEvent &event) {
@@ -400,11 +408,14 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     if (!event.isPrimary() || !(event.pointer() & Pointer::MouseLeft))
         return;
 
+#ifdef IS_CLIENT
     if (_gameState != GameState::InGame) {
         _imguiContext.handlePointerPressEvent(event);
         event.setAccepted();
         return;
     }
+#endif
+
 
     //Spawn the projectile
 #ifdef IS_SERVER
@@ -434,13 +445,17 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
 }
 
 void MyApplication::pointerReleaseEvent(PointerEvent &event) {
+#ifdef IS_CLIENT
     if (_imguiContext.handlePointerReleaseEvent(event)) return;
+#endif
 }
 
 void MyApplication::viewportEvent(ViewportEvent &event) {
     GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
+#ifdef IS_CLIENT
     _imguiContext.relayout(Vector2{event.windowSize()} / event.dpiScaling(), event.windowSize(),
-                           event.framebufferSize());
+                          event.framebufferSize());
+#endif
 }
 
 void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename) {
