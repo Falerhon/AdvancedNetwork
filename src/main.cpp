@@ -4,6 +4,7 @@
 #include <Magnum/Platform/GlfwApplication.h>
 
 
+#include "../cmake-build-debug/_deps/magnum-integration-src/src/Magnum/ImGuiIntegration/Context.hpp"
 #include "BulletCollision/BroadphaseCollision/btDbvtBroadphase.h"
 #include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
 #include "BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h"
@@ -37,6 +38,7 @@
 #include "Magnum/Trade/MeshData.h"
 #include "enet6/enet.h"
 #include "Network/APIHandler.h"
+#include "GameObject//Drawable/MBUiRenderer.h"
 
 //TODO : SET THE ONLINE SERVE URL
 #define OnlineServerUrl "http://localhost:5039"
@@ -56,7 +58,17 @@ private:
 
     void keyPressEvent(KeyEvent &event) override;
 
+    void keyReleaseEvent(KeyEvent &event) override;
+
+    void textInputEvent(TextInputEvent& event) override;
+
+    void pointerMoveEvent(PointerMoveEvent &event) override;
+
     void pointerPressEvent(PointerEvent &event) override;
+
+    void pointerReleaseEvent(PointerEvent &event) override;
+
+    void viewportEvent(ViewportEvent &event) override;
 
     void SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename);
 
@@ -94,6 +106,12 @@ private:
 
     Object3D *cameraRig, *cameraObject;
 
+    ImGuiIntegration::Context _imguiContext{NoCreate};
+
+    UiRenderer* _uiRenderer;
+    //Game state to track which UI to use
+    GameState _gameState;
+
     bool drawObjects{true}, drawDebug{false}, shootBox{false};
 
     APIHandler* API;
@@ -115,6 +133,9 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
 
     //API set up
     API = new APIHandler(OnlineServerUrl);
+
+    _uiRenderer = new UiRenderer(API);
+    _gameState = GameState::Login;
 
     //Camera set up
     cameraRig = new Object3D{&scene};
@@ -192,6 +213,16 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
         }
     }
 
+    //imGui set up
+    _imguiContext = ImGuiIntegration::Context(Vector2(windowSize()/dpiScaling()),
+                                        windowSize(), framebufferSize());
+
+
+    GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
+        GL::Renderer::BlendEquation::Add);
+    GL::Renderer::setBlendFunction(GL::Renderer::BlendFunction::SourceAlpha,
+        GL::Renderer::BlendFunction::OneMinusSourceAlpha);
+
     // Loop at 60 Hz max
     setSwapInterval(1);
     setMinimalLoopPeriod(16.0_msec);
@@ -253,12 +284,49 @@ void MyApplication::drawEvent() {
         }
     }
 
+    //Draw the UI
+    _imguiContext.newFrame();
+
+    auto newState = _uiRenderer->draw(_gameState);
+    if (newState.has_value())
+        _gameState = newState.value();
+
+    if(ImGui::GetIO().WantTextInput && !isTextInputActive())
+        startTextInput();
+    else if(!ImGui::GetIO().WantTextInput && isTextInputActive())
+        stopTextInput();
+
+    //Sets the renderer for 2d rendering
+    GL::Renderer::enable(GL::Renderer::Feature::Blending);
+    GL::Renderer::enable(GL::Renderer::Feature::ScissorTest);
+    GL::Renderer::disable(GL::Renderer::Feature::FaceCulling);
+    GL::Renderer::disable(GL::Renderer::Feature::DepthTest);
+
+    _imguiContext.drawFrame();
+
+    /* Update application cursor */
+    _imguiContext.updateApplicationCursor(*this);
+
+    //Reset the renderer state for 3d rendering
+    GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
+    GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
+    GL::Renderer::disable(GL::Renderer::Feature::ScissorTest);
+    GL::Renderer::disable(GL::Renderer::Feature::Blending);
+
     swapBuffers();
     timeline.nextFrame();
     redraw();
 }
 
 void MyApplication::keyPressEvent(KeyEvent &event) {
+
+    if (_gameState != GameState::InGame) {
+        _imguiContext.handleKeyPressEvent(event);
+        event.setAccepted();
+        return;
+    }
+
+
     //Movement
     if (event.key() == Key::Down || event.key() == Key::S) {
         cameraObject->translate(Vector3({0.f, 0.f, 5.f}));
@@ -278,12 +346,6 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
     } else if (event.key() == Key::L) {
         std::string filename = "../SaveFile.bin";
         LoadWorldState(objects, filename);
-    } else if (event.key() == Key::O) {
-        if (API->login("bat", "man")) {
-            Debug{} << "Login successfull";
-        } else {
-            Error{} << "Login failed";
-        }
     } else if (event.key() == Key::P) {
         auto response = API->get("/api/Stats/info");
         if (response.status_code == 200) {
@@ -296,10 +358,28 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
     event.setAccepted();
 }
 
+void MyApplication::keyReleaseEvent(KeyEvent &event) {
+    if(_imguiContext.handleKeyReleaseEvent(event)) return;
+}
+
+void MyApplication::textInputEvent(TextInputEvent &event) {
+        if(_imguiContext.handleTextInputEvent(event)) return;
+}
+
+void MyApplication::pointerMoveEvent(PointerMoveEvent& event) {
+    if(_imguiContext.handlePointerMoveEvent(event)) return;
+}
+
 void MyApplication::pointerPressEvent(PointerEvent &event) {
     //Shoot an object on click
     if (!event.isPrimary() || !(event.pointer() & Pointer::MouseLeft))
         return;
+
+    if (_gameState != GameState::InGame) {
+        _imguiContext.handlePointerPressEvent(event);
+        event.setAccepted();
+        return;
+    }
 
     //Scale the position from relative to the window size to relative to the framebuffer size
     //Since the HiDPI can vary
@@ -322,6 +402,15 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     objects.push_back(object);
 
     event.setAccepted();
+}
+
+void MyApplication::pointerReleaseEvent(PointerEvent& event) {
+    if(_imguiContext.handlePointerReleaseEvent(event)) return;
+}
+
+void MyApplication::viewportEvent(ViewportEvent &event) {
+    GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
+    _imguiContext.relayout(Vector2{event.windowSize()}/event.dpiScaling(), event.windowSize(), event.framebufferSize());
 }
 
 void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename) {
