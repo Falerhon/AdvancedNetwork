@@ -36,6 +36,9 @@ MBRigidBody::~MBRigidBody() {
 }
 
 void MBRigidBody::SetTransform(Vector3 newPosition, Quaternion newRotation, Vector3 newScale) {
+    if (bRigidBody.get() == nullptr)
+        return;
+
     bWorld.removeRigidBody(bRigidBody.get());
 
     bRigidBody->setGravity(bWorld.getGravity());
