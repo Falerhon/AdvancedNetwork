@@ -318,13 +318,15 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     //Set initial velocity
     object->getMBRigidBody()->getRigidBody().setLinearVelocity(btVector3{direction * 25.f});
 
+    //Add to snapshot
+    objects.push_back(object);
+
     event.setAccepted();
 }
 
 void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename) {
     std::ofstream saveFile(filename);
     for (auto object: objects) {
-        std::cout << "Saving " << object << std::endl;
         object->SerializeObject(saveFile);
     }
 
@@ -334,7 +336,6 @@ void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const
 void MyApplication::LoadWorldState(std::vector<MBObject *> &objects, const std::string &filename) {
     std::ifstream saveFile(filename);
     for (auto object: objects) {
-        std::cout << "Loading " << object << std::endl;
         object->DeserializeObject(saveFile);
     }
 
