@@ -34,7 +34,9 @@ add_executable(MagnumBootstrap
         src/Network/APIHandler.h
         src/GameObject/Object/GameState.h
         src/GameObject/Drawable/MBUiRenderer.cpp
-        src/GameObject/Drawable/MBUiRenderer.h)
+        src/GameObject/Drawable/MBUiRenderer.h
+        src/Network/MatchmakingManager.cpp
+        src/Network/MatchmakingManager.h)
 
 target_include_directories(MagnumBootstrap PUBLIC inc)
 set_property(TARGET MagnumBootstrap PROPERTY CXX_STANDARD 20)

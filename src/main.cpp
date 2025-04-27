@@ -39,6 +39,7 @@
 #include "enet6/enet.h"
 #include "Network/APIHandler.h"
 #include "GameObject//Drawable/MBUiRenderer.h"
+#include "Network/MatchmakingManager.h"
 
 //TODO : SET THE ONLINE SERVE URL
 #define OnlineServerUrl "http://localhost:5039"
@@ -54,6 +55,8 @@ public:
     explicit MyApplication(const Arguments &arguments);
 
 private:
+    void tickEvent() override;
+
     void drawEvent() override;
 
     void keyPressEvent(KeyEvent &event) override;
@@ -107,6 +110,7 @@ private:
     Object3D *cameraRig, *cameraObject;
 
     ImGuiIntegration::Context _imguiContext{NoCreate};
+    MatchmakingManager* _matchmaking;
 
     UiRenderer* _uiRenderer;
     //Game state to track which UI to use
@@ -217,6 +221,7 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     _imguiContext = ImGuiIntegration::Context(Vector2(windowSize()/dpiScaling()),
                                         windowSize(), framebufferSize());
 
+    _matchmaking = new MatchmakingManager(API);
 
     GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
         GL::Renderer::BlendEquation::Add);
@@ -227,6 +232,17 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     setSwapInterval(1);
     setMinimalLoopPeriod(16.0_msec);
     timeline.start();
+}
+
+void MyApplication::tickEvent() {
+    timeline.nextFrame();
+    //Step bullet simulation
+    bWorld.stepSimulation(timeline.previousFrameDuration(), 5);
+
+    if (_gameState == GameState::LookingForSession)
+        _matchmaking->update();
+
+    redraw();
 }
 
 void MyApplication::drawEvent() {
@@ -241,9 +257,6 @@ void MyApplication::drawEvent() {
 
         obj = next;
     }
-
-    //Step bullet simulation
-    bWorld.stepSimulation(timeline.previousFrameDuration(), 5);
 
     //Draw the cubes and spheres
     if (drawObjects) {
@@ -314,8 +327,6 @@ void MyApplication::drawEvent() {
     GL::Renderer::disable(GL::Renderer::Feature::Blending);
 
     swapBuffers();
-    timeline.nextFrame();
-    redraw();
 }
 
 void MyApplication::keyPressEvent(KeyEvent &event) {

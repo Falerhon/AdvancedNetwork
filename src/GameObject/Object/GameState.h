@@ -7,7 +7,7 @@
 enum class GameState {
     Login,
     LoginFailed,
-    SignIn,
+    SignUp,
     MainMenu,
     LookingForSession,
     InGame

@@ -19,8 +19,8 @@ private:
     char TextOne[128];
     char TextTwo[128];
 
-    std::optional<GameState> DrawLogin();
-    std::optional<GameState> DrawSignIn();
+    std::optional<GameState> DrawLogin(bool wasError = false);
+    std::optional<GameState> DrawSignUp();
     std::optional<GameState> DrawMainMenu();
     std::optional<GameState> DrawLookingForSession();
 };
