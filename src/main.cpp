@@ -4,7 +4,8 @@
 #include <Magnum/Platform/GlfwApplication.h>
 
 
-#include "../cmake-build-debug/_deps/magnum-integration-src/src/Magnum/ImGuiIntegration/Context.hpp"
+#include "imgui.h"
+#include "Magnum/ImGuiIntegration/Context.h"
 #include "BulletCollision/BroadphaseCollision/btDbvtBroadphase.h"
 #include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
 #include "BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h"
