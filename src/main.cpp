@@ -4,8 +4,7 @@
 #include <Magnum/Platform/GlfwApplication.h>
 
 
-#include "imgui.h"
-#include "Magnum/ImGuiIntegration/Context.h"
+#include "Magnum/ImGuiIntegration/Context.hpp"
 #include "BulletCollision/BroadphaseCollision/btDbvtBroadphase.h"
 #include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
 #include "BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h"
