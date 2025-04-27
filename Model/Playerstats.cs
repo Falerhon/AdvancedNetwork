@@ -5,7 +5,7 @@ namespace CUBEGAMEAPI.Models
 {
     public class PlayerStatsModel
     {
-        [Key, ForeignKey("Player")]
+        [Key, ForeignKey("Users")]
         public int Id { get; set; }
 
         public int GamesWon { get; set; }

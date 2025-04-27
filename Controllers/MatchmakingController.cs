@@ -53,7 +53,12 @@ namespace CUBEGAMEAPI.Controllers
 
             if (lobby != null)
             {
-                return Ok(lobby);
+                var server = _context.GameServers.FirstOrDefault(s => s.Id == lobby.ServerId);
+
+                if (server != null)
+                {
+                    return Ok(server);
+                }
             }
             
             return Ok("Looking for lobby");
@@ -78,6 +83,13 @@ namespace CUBEGAMEAPI.Controllers
         {
             var Server = _context.GameServers
                 .FirstOrDefault(s => s.CurrentPlayers < s.MaxPlayers && !s.IsOccupied);
+
+            var s = _context.GameServers.Count();
+
+            if (s <= 0)
+            {
+                return;
+            }
             
             if(Server == null)
                 return;

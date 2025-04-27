@@ -156,4 +156,42 @@ app.MapDelete("/useritems/{id}", async (int id, UserDb db) =>
 
 app.MapControllers();
 
+//Quick setup for test logins for servers
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<UserDb>();
+    var hasher = new PasswordHasher<GameServerAuth>();
+
+    List<GameServerAuth> testServers = new List<GameServerAuth>()
+    {
+        new GameServerAuth()
+        {
+            ServerName = "Zip",
+            PasswordHash = "Zap",
+        },
+        new GameServerAuth()
+        {
+            ServerName = "Pen",
+            PasswordHash = "Cil",
+        },
+        new GameServerAuth()
+        {
+        ServerName = "Wee",
+        PasswordHash = "Man",
+    }
+    };
+
+    // Check if any servers exist
+    if (!context.GameServersAuth.Any())
+    {
+        foreach (var auth in testServers)
+        {
+            auth.PasswordHash = hasher.HashPassword(auth, auth.PasswordHash);
+            context.GameServersAuth.Add(auth);
+        }
+        
+        context.SaveChanges();
+    }
+}
+
 app.Run();
