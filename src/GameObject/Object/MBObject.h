@@ -20,6 +20,11 @@ typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 
 struct QuaternionFloat {
     float x,y,z,w;
+
+    QuaternionFloat(): x(0), y(0), z(0), w(0) {
+    }
+
+    QuaternionFloat(float _x, float _y, float _z, float _w) { x = _x; y = _y; z = _z; w = _w; }
 };
 
 class MBObject {
