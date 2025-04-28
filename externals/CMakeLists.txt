@@ -32,6 +32,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(enet)
 
+
 FetchContent_Declare(
         cpr
         GIT_REPOSITORY https://github.com/libcpr/cpr.git
@@ -39,6 +40,8 @@ FetchContent_Declare(
 )
 
 set(CPR_USE_SYSTEM_CURL OFF)
+#Avoid MacOS problems
+set(CURL_USE_LIBIDN2 OFF)
 FetchContent_MakeAvailable(cpr)
 
 FetchContent_Declare(
