@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.30)
 project(MagnumBootstrap)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules/" ${CMAKE_MODULE_PATH})
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 add_subdirectory(externals)
 find_package(Magnum REQUIRED
@@ -68,16 +70,13 @@ target_link_libraries(MagnumBootstrap PUBLIC enet)
 target_link_libraries(MagnumBootstrap PRIVATE cpr::cpr)
 target_link_libraries(MagnumBootstrap PRIVATE nlohmann_json::nlohmann_json)
 
+
+
 # Link platform-specific networking libraries
 if(WIN32)
     target_link_libraries(MagnumBootstrap PRIVATE ws2_32)
 else()
     target_link_libraries(MagnumBootstrap PRIVATE pthread)
-endif()
-
-if (MSVC)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
 endif()
 
 add_subdirectory(samples)
