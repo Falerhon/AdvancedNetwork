@@ -75,4 +75,9 @@ else()
     target_link_libraries(MagnumBootstrap PRIVATE pthread)
 endif()
 
+if (MSVC)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
+endif()
+
 add_subdirectory(samples)
