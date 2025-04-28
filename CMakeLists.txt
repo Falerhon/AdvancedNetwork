@@ -3,7 +3,9 @@ project(MagnumBootstrap)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules/" ${CMAKE_MODULE_PATH})
 #set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL$<$<CONFIG:Debug>:Debug>")
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+endif()
 
 add_subdirectory(externals)
 find_package(Magnum REQUIRED
