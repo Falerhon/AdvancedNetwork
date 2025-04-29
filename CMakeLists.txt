@@ -22,6 +22,8 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_executable(MagnumBootstrap
         src/main.cpp
+        src/CubeGame.cpp
+        src/CubeGame.h
         src/GameObject/Object/MBObject.cpp
         src/GameObject/Object/MBObject.h
         src/GameObject/RigidBody/MBRigidBody.cpp
@@ -44,7 +46,9 @@ add_executable(MagnumBootstrap
         src/Network/NetworkObjectFactory.cpp
         src/Network/NetworkObjectFactory.h
         src/GameLogic/GameLogic.cpp
-        src/GameLogic/GameLogic.h)
+        src/GameLogic/GameLogic.h
+        src/Network/NetworkEvent.h
+)
 
 target_include_directories(MagnumBootstrap PUBLIC inc)
 set_property(TARGET MagnumBootstrap PROPERTY CXX_STANDARD 20)
@@ -65,7 +69,6 @@ target_link_libraries(MagnumBootstrap PRIVATE
         LinearMath
         Bullet3Common)
 target_link_libraries(MagnumBootstrap PUBLIC EnTT::EnTT)
-
 
 target_link_libraries(MagnumBootstrap PUBLIC enet)
 

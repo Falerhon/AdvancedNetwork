@@ -41,8 +41,11 @@ public:
 
     virtual NetworkClassID GetClassId() const = 0;
 
-    virtual void SerializeObject(std::ofstream& outStream) const;
-    virtual void DeserializeObject(std::ifstream& inStream);
+    virtual void SerializeObject(char* buffer, size_t& offset) const;
+    virtual void DeserializeObject(const uint8_t* data, size_t& offset);
+
+    virtual void SerializeObjectToBinary(std::ofstream& outStream) const;
+    virtual void DeserializeObjectToBinary(std::ifstream& inStream);
 
     MBRigidBody* getMBRigidBody() const {return _rigidBody; }
     MBDrawable* getMBDrawable() const {return _drawableObject; }
@@ -57,6 +60,7 @@ protected:
 private:
     static QuaternionFloat MatrixToQuat(Matrix3x3 matrix);
     Matrix3x3 QuatToMatrix(QuaternionFloat quat) const;
+
     uint32_t _networkID;
 };
 

@@ -29,11 +29,161 @@ MBObject::MBObject(Object3D *scene, btDynamicsWorld &dynamicsWorld, float mass, 
         (*_rigidBody), InstanceData, Color,
         Matrix4::scaling(scale), DrawableGroup
     };
-
-    
 }
 
-void MBObject::SerializeObject(std::ofstream &outStream) const {
+void MBObject::SerializeObject(char* buffer, size_t& offset) const {
+    auto write = [&](const void *data, size_t size) {
+        memcpy(buffer + offset, data, size);
+        offset += size;
+    };
+
+    //********* Write NetworkID *********//
+    uint32_t netID = GetNetworkId();
+    write(&netID, sizeof(netID));
+
+    //********* Write ClassID *********//
+    NetworkClassID classID = GetClassId();
+    write(&classID, sizeof(classID));
+
+    //********* Write position *********//
+    Vector3 position = _rigidBody->GetPosition();
+    int32_t pX = position.x() * PRECISIONMULTIPLIER;
+    int32_t pY = position.y() * PRECISIONMULTIPLIER;
+    int32_t pZ = position.z() * PRECISIONMULTIPLIER;
+    write(&pX, sizeof(pX));
+    write(&pY, sizeof(pY));
+    write(&pZ, sizeof(pZ));
+
+    //********* Write scale *********//
+    Vector3 scale = _rigidBody->GetScale();
+    int16_t sX = scale.x() * PRECISIONMULTIPLIER;
+    int16_t sY = scale.y() * PRECISIONMULTIPLIER;
+    int16_t sZ = scale.z() * PRECISIONMULTIPLIER;
+    write(&sX, sizeof(sX));
+    write(&sY, sizeof(sY));
+    write(&sZ, sizeof(sZ));
+
+    //********* Write rotation *********//
+    Quaternion rotation = _rigidBody->GetRotation();
+    QuaternionFloat quat = {rotation.xyzw().w(), rotation.xyzw().y(), rotation.xyzw().z(), rotation.xyzw().w()};
+    uint8_t maxIndex = 99;
+    float maxValue = std::numeric_limits<float>::min();
+    int sign = 1;
+
+    float quatElements[4] = {rotation.xyzw().x(), rotation.xyzw().y(), rotation.xyzw().z(), rotation.xyzw().w()};
+    //Get the largest element
+    for (int i = 0; i < 4; i++) {
+        float element = quatElements[i];
+        float absValue = abs(element);
+        if (absValue > maxValue) {
+            sign = (element < 0) ? -1 : 1;
+
+            maxIndex = i;
+            maxValue = absValue;
+        }
+    }
+
+    uint16_t a;
+    uint16_t b;
+    uint16_t c;
+
+    switch (maxIndex) {
+        case 0:
+            a = (uint16_t) (quat.y * sign * PRECISIONMULTIPLIER);
+            b = (uint16_t) (quat.z * sign * PRECISIONMULTIPLIER);
+            c = (uint16_t) (quat.w * sign * PRECISIONMULTIPLIER);
+            break;
+        case 1:
+            a = (uint16_t) (quat.x * sign * PRECISIONMULTIPLIER);
+            b = (uint16_t) (quat.z * sign * PRECISIONMULTIPLIER);
+            c = (uint16_t) (quat.w * sign * PRECISIONMULTIPLIER);
+            break;
+        case 2:
+            a = (uint16_t) (quat.x * sign * PRECISIONMULTIPLIER);
+            b = (uint16_t) (quat.y * sign * PRECISIONMULTIPLIER);
+            c = (uint16_t) (quat.w * sign * PRECISIONMULTIPLIER);
+            break;
+        default:
+            a = (uint16_t) (quat.x * sign * PRECISIONMULTIPLIER);
+            b = (uint16_t) (quat.y * sign * PRECISIONMULTIPLIER);
+            c = (uint16_t) (quat.z * sign * PRECISIONMULTIPLIER);
+    }
+    write(&maxIndex, sizeof(maxIndex));
+    write(&a, sizeof(a));
+    write(&b, sizeof(b));
+    write(&c, sizeof(c));
+
+    //********* Write color *********//
+    Color3 drawableColor = _drawableObject->getColor();
+    uint32_t color = drawableColor.toSrgbInt();
+    write(&color, sizeof(color));
+}
+
+void MBObject::DeserializeObject(const uint8_t *data, size_t& offset) {
+    auto read = [&](void *dest, size_t size) {
+        std::memcpy(dest, data + offset, size);
+        offset += size;
+    };
+
+    //********* Read position *********//
+    int32_t pX, pY, pZ;
+    read(&pX, sizeof(pX));
+    read(&pY, sizeof(pY));
+    read(&pZ, sizeof(pZ));
+    float posX = static_cast<float>(pX) / PRECISIONMULTIPLIER;
+    float posY = static_cast<float>(pY) / PRECISIONMULTIPLIER;
+    float posZ = static_cast<float>(pZ) / PRECISIONMULTIPLIER;
+
+    //********* Read scale *********//
+    int16_t sX, sY, sZ;
+    read(&sX, sizeof(sX));
+    read(&sY, sizeof(sY));
+    read(&sZ, sizeof(sZ));
+    float scaleX = static_cast<float>(sX) / PRECISIONMULTIPLIER;
+    float scaleY = static_cast<float>(sY) / PRECISIONMULTIPLIER;
+    float scaleZ = static_cast<float>(sZ) / PRECISIONMULTIPLIER;
+
+    //********* Read rotation *********//
+    uint8_t maxIndex;
+    uint16_t a, b, c;
+    read(&maxIndex, sizeof(maxIndex));
+    read(&a, sizeof(a));
+    read(&b, sizeof(b));
+    read(&c, sizeof(c));
+
+    float x = static_cast<float>(a) / PRECISIONMULTIPLIER;
+    float y = static_cast<float>(b) / PRECISIONMULTIPLIER;
+    float z = static_cast<float>(c) / PRECISIONMULTIPLIER;
+    float w = std::sqrt(1.0f - (x * x + y * y + z * z));
+
+    //********* Read color *********//
+    uint32_t color;
+    read(&color, sizeof(color));
+
+    //********* Set values *********//
+    QuaternionFloat quat;
+    if (maxIndex == 0)
+        quat = QuaternionFloat(w, x, y, z);
+    else if (maxIndex == 1)
+        quat = QuaternionFloat(x, w, y, z);
+    else if (maxIndex == 2)
+        quat = QuaternionFloat(x, y, w, z);
+    else
+        quat = QuaternionFloat(x, y, z, w);
+
+    Quaternion translatedQuat;
+    translatedQuat.xyzw().x() = quat.x;
+    translatedQuat.xyzw().y() = quat.y;
+    translatedQuat.xyzw().z() = quat.z;
+    translatedQuat.xyzw().w() = quat.w;
+
+    _rigidBody->SetTransform(Vector3(posX, posY, posZ), translatedQuat, Vector3(scaleX, scaleY, scaleZ));
+
+    Color3 linearColor = Color3::fromSrgb(color);
+    _drawableObject->SetColor(linearColor);
+}
+
+void MBObject::SerializeObjectToBinary(std::ofstream &outStream) const {
     //********* Write NetworkID *********//
     uint32_t netID = GetNetworkId();
     outStream.write(reinterpret_cast<const char *>(&netID), sizeof(uint32_t));
@@ -63,7 +213,7 @@ void MBObject::SerializeObject(std::ofstream &outStream) const {
 
     //********* Write rotation *********//
     Quaternion rotation = _rigidBody->GetRotation();
-    QuaternionFloat quat = {rotation.xyzw().w(),rotation.xyzw().y(), rotation.xyzw().z(), rotation.xyzw().w()};
+    QuaternionFloat quat = {rotation.xyzw().w(), rotation.xyzw().y(), rotation.xyzw().z(), rotation.xyzw().w()};
     uint8_t maxIndex = 99;
     float maxValue = std::numeric_limits<float>::min();
     int sign = 1;
@@ -118,7 +268,7 @@ void MBObject::SerializeObject(std::ofstream &outStream) const {
     outStream.write(reinterpret_cast<const char *>(&color), sizeof(uint32_t));
 }
 
-void MBObject::DeserializeObject(std::ifstream &inStream) {
+void MBObject::DeserializeObjectToBinary(std::ifstream &inStream) {
     //NetworkID
     uint32_t netID;
     inStream.read(reinterpret_cast<char *>(&netID), sizeof(uint32_t));
@@ -182,11 +332,10 @@ void MBObject::DeserializeObject(std::ifstream &inStream) {
     translatedQuat.xyzw().z() = quat.z;
     translatedQuat.xyzw().w() = quat.w;
 
-    _rigidBody->SetTransform(Vector3(posX, posY, posZ),translatedQuat, Vector3(scaleX, scaleY, scaleZ));
+    _rigidBody->SetTransform(Vector3(posX, posY, posZ), translatedQuat, Vector3(scaleX, scaleY, scaleZ));
 
     Color3 linearColor = Color3::fromSrgb(color);
     _drawableObject->SetColor(linearColor);
-
 }
 
 QuaternionFloat MBObject::MatrixToQuat(Matrix3x3 m) {

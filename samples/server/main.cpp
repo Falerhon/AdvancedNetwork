@@ -1,6 +1,7 @@
-#include <chrono>
 #include <cstdint>
 #include <iostream>
+
+#include "CubeGame.h"
 #include "enet6/enet.h"
 
 constexpr uint16_t SERVER_PORT = 1234;
@@ -41,7 +42,14 @@ int main() {
 
     std::cout << "Server started on port " << SERVER_PORT << std::endl;
 
-    while (true) {
+    int argc = 1;
+    char arg0[] = "CubeGameApp";
+    char* argv[] = { arg0 };
+
+    CubeGame game(Platform::GlfwApplication::Arguments{argc, argv});
+    game.Init(server);
+    return game.exec();
+    /*while (true) {
         if (enet_host_service(server, &event, 1000) > 0) {
             switch (event.type) {
                 case ENET_EVENT_TYPE_CONNECT:
@@ -68,6 +76,6 @@ int main() {
                     break;
             }
         }
-    }
+    }*/
     return EXIT_SUCCESS;
 }

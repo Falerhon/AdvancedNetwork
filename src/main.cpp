@@ -478,7 +478,7 @@ void MyApplication::viewportEvent(ViewportEvent &event) {
 void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename) {
     std::ofstream saveFile(filename);
     for (auto object: objects) {
-        object->SerializeObject(saveFile);
+        object->SerializeObjectToBinary(saveFile);
     }
 
     saveFile.close();
@@ -487,7 +487,7 @@ void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const
 void MyApplication::LoadWorldState(std::vector<MBObject *> &objects, const std::string &filename) {
     std::ifstream saveFile(filename);
     for (auto object: objects) {
-        object->DeserializeObject(saveFile);
+        object->DeserializeObjectToBinary(saveFile);
     }
 
     saveFile.close();
