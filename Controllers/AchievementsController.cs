@@ -44,9 +44,9 @@ namespace CUBEGAMEAPI.Controllers
 
             return Ok(unlocked);
         }
-        // GET: api/achievements/NewAchivements
+        // GET: api/achievements/NewAchievements
         [Authorize]
-        [HttpGet("NewAchivements")]
+        [HttpGet("NewAchievements")]
         public IActionResult GetNewAchivement()
         {
             int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
