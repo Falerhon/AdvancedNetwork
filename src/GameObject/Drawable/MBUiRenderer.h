@@ -11,7 +11,7 @@ class UiRenderer {
 public:
     UiRenderer(APIHandler* API);
 
-    std::optional<GameState> draw(GameState& state);
+    void draw(GameState state);
 
 private:
     APIHandler* API;
@@ -19,8 +19,8 @@ private:
     char TextOne[128];
     char TextTwo[128];
 
-    std::optional<GameState> DrawLogin(bool wasError = false);
-    std::optional<GameState> DrawSignUp();
-    std::optional<GameState> DrawMainMenu();
-    std::optional<GameState> DrawLookingForSession();
+    void DrawLogin(bool wasError = false);
+    void DrawSignUp();
+    void DrawMainMenu();
+    void DrawLookingForSession();
 };

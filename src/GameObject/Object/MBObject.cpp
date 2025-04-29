@@ -29,6 +29,8 @@ MBObject::MBObject(Object3D *scene, btDynamicsWorld &dynamicsWorld, float mass, 
         (*_rigidBody), InstanceData, Color,
         Matrix4::scaling(scale), DrawableGroup
     };
+
+    
 }
 
 void MBObject::SerializeObject(std::ofstream &outStream) const {

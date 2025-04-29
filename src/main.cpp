@@ -37,6 +37,7 @@
 #include "Magnum/Shaders/PhongGL.h"
 #include "Magnum/Trade/MeshData.h"
 #include "enet6/enet.h"
+#include "GameLogic/GameLogic.h"
 #include "Network/APIHandler.h"
 #include "GameObject//Drawable/MBUiRenderer.h"
 #include "Network/LinkingContext.h"
@@ -114,8 +115,6 @@ private:
     MatchmakingManager *_matchmaking;
 
     UiRenderer *_uiRenderer;
-    //Game state to track which UI to use
-    GameState _gameState;
 
     bool drawObjects{true}, drawDebug{false}, shootBox{false};
 
@@ -143,7 +142,6 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     LinkingContext *linking_context = new LinkingContext();
 
     _uiRenderer = new UiRenderer(API);
-    _gameState = GameState::Login;
 
     //Camera set up
     cameraRig = new Object3D{&scene};
@@ -201,31 +199,41 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     bWorld.setDebugDrawer(&debugDraw);
 
     //Spawn of ground and cubes
-#ifdef IS_SERVER
-    //Create the ground
-    MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0, 0, 0}, boxInstancesDatas,
-                 drawableGroup, 0xffffff_rgbf, groundShape);
+//#ifdef IS_SERVER
 
     int nbOfBoxPerSides = 2;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
+    float playersOffset = 20;
     //Create boxes with random colors
     Deg boxHue = 42.0_degf;
-    for (Int i = 0; i != nbOfBoxPerSides; ++i) {
-        for (Int j = 0; j != nbOfBoxPerSides; ++j) {
-            for (Int k = 0; k != nbOfBoxPerSides; ++k) {
-                MBCubeObject *cube = new MBCubeObject(&scene, bWorld, 1.f, {.5f, .5f, .5f},
-                                                      {i - centerOffset, j + centerOffset, k - centerOffset},
-                                                      boxInstancesDatas,
-                                                      drawableGroup, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}),
-                                                      boxShape);
-                cube->SetNetworkId(linking_context->Register(cube));
-                objects.emplace_back(cube);
+    //Each player
+    for (int h = 0; h < 4; h++) {
+
+        //Create the ground
+        MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {h * playersOffset, 0, 0}, boxInstancesDatas,
+                     drawableGroup, 0xffffff_rgbf, groundShape);
+
+        //Spawning boxes
+        for (Int i = 0; i != nbOfBoxPerSides; ++i) {
+            for (Int j = 0; j != nbOfBoxPerSides; ++j) {
+                for (Int k = 0; k != nbOfBoxPerSides; ++k) {
+                    MBCubeObject *cube = new MBCubeObject(&scene, bWorld, 1.f, {.5f, .5f, .5f},
+                                                          {(i + h * playersOffset) - centerOffset, j + centerOffset, k - centerOffset},
+                                                          boxInstancesDatas,
+                                                          drawableGroup, Color3::fromHsv({boxHue += 137.5_degf, .75f, .9f}),
+                                                          boxShape, h);
+                    cube->SetNetworkId(linking_context->Register(cube));
+                    objects.emplace_back(cube);
+                }
             }
         }
-    }
-#endif
 
-#ifdef IS_CLIENT
+        GameLogic::GetInstance().AddPlayer(std::pow(nbOfBoxPerSides, 3));
+    }
+
+//#endif
+
+//#ifdef IS_CLIENT
 
     //imGui set up
     _imguiContext = ImGuiIntegration::Context(Vector2(windowSize() / dpiScaling()),
@@ -234,9 +242,12 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
                                    GL::Renderer::BlendEquation::Add);
     GL::Renderer::setBlendFunction(GL::Renderer::BlendFunction::SourceAlpha,
                                    GL::Renderer::BlendFunction::OneMinusSourceAlpha);
-#endif
+//#endif
 
     _matchmaking = new MatchmakingManager(API);
+
+    //TODO : REMOVE THIS
+    GameLogic::GetInstance().SetGameState(GameState::InGame);
 
     // Loop at 60 Hz max
     setSwapInterval(1);
@@ -249,28 +260,36 @@ void MyApplication::tickEvent() {
     //Step bullet simulation
     bWorld.stepSimulation(timeline.previousFrameDuration(), 5);
 
-    if (_gameState == GameState::LookingForSession)
+    if (GameLogic::GetInstance().GetGameState() == GameState::LookingForSession)
         _matchmaking->update();
 
-#ifdef IS_CLIENT
+    //TODO : Do the check somewhere else
+    //TODO : Destroy MBObjects, not just objects
+    //Remove any object far from the origin
+    std::vector<int> objectsToDestroy;
+    int x = 0;
+    for (MBObject *obj : objects) {
+        if (obj->getMBRigidBody()->transformation().translation().y() < -2) {
+            objectsToDestroy.push_back(x);
+        }
+        x++;
+    }
+
+    for (int i : objectsToDestroy) {
+        MBObject *obj = objects[i];
+        objects.erase(std::find(objects.begin(), objects.end(), obj));
+        delete obj;
+    }
+
+//#ifdef IS_CLIENT
     redraw();
-#endif
+//#endif
 }
 
 void MyApplication::drawEvent() {
-#ifdef IS_CLIENT
+//#ifdef IS_CLIENT
 
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
-
-    //Remove any object far from the origin
-    for (Object3D *obj = scene.children().first(); obj;) {
-        Object3D *next = obj->nextSibling();
-
-        if (obj->transformation().translation().dot() > 100 * 100)
-            delete obj;
-
-        obj = next;
-    }
 
     //Draw the cubes and spheres
     if (drawObjects) {
@@ -314,9 +333,7 @@ void MyApplication::drawEvent() {
     //Draw the UI
     _imguiContext.newFrame();
 
-    auto newState = _uiRenderer->draw(_gameState);
-    if (newState.has_value())
-        _gameState = newState.value();
+    _uiRenderer->draw(GameLogic::GetInstance().GetGameState());
 
     if (ImGui::GetIO().WantTextInput && !isTextInputActive())
         startTextInput();
@@ -341,17 +358,17 @@ void MyApplication::drawEvent() {
     GL::Renderer::disable(GL::Renderer::Feature::Blending);
 
     swapBuffers();
-#endif
+//#endif
 }
 
 void MyApplication::keyPressEvent(KeyEvent &event) {
-#ifdef IS_CLIENT
-    if (_gameState != GameState::InGame) {
+//#ifdef IS_CLIENT
+    if (GameLogic::GetInstance().GetGameState() != GameState::InGame) {
         _imguiContext.handleKeyPressEvent(event);
         event.setAccepted();
         return;
     }
-#endif
+//#endif
 
 
     //Movement
@@ -386,21 +403,21 @@ void MyApplication::keyPressEvent(KeyEvent &event) {
 }
 
 void MyApplication::keyReleaseEvent(KeyEvent &event) {
-#ifdef IS_CLIENT
+//#ifdef IS_CLIENT
     if (_imguiContext.handleKeyReleaseEvent(event)) return;
-#endif
+//#endif
 }
 
 void MyApplication::textInputEvent(TextInputEvent &event) {
-#ifdef IS_CLIENT
+//#ifdef IS_CLIENT
     if (_imguiContext.handleTextInputEvent(event)) return;
-#endif
+//#endif
 }
 
 void MyApplication::pointerMoveEvent(PointerMoveEvent &event) {
-#ifdef IS_CLIENT
+//#ifdef IS_CLIENT
     if (_imguiContext.handlePointerMoveEvent(event)) return;
-#endif
+//#endif
 }
 
 void MyApplication::pointerPressEvent(PointerEvent &event) {
@@ -408,17 +425,17 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     if (!event.isPrimary() || !(event.pointer() & Pointer::MouseLeft))
         return;
 
-#ifdef IS_CLIENT
-    if (_gameState != GameState::InGame) {
+//#ifdef IS_CLIENT
+    if (GameLogic::GetInstance().GetGameState() != GameState::InGame) {
         _imguiContext.handlePointerPressEvent(event);
         event.setAccepted();
         return;
     }
-#endif
+//#endif
 
 
     //Spawn the projectile
-#ifdef IS_SERVER
+//#ifdef IS_SERVER
     //Scale the position from relative to the window size to relative to the framebuffer size
     //Since the HiDPI can vary
     const Vector2 position = event.position() * Vector2{framebufferSize()} / Vector2{windowSize()};
@@ -436,26 +453,26 @@ void MyApplication::pointerPressEvent(PointerEvent &event) {
     //Set initial velocity
     object->getMBRigidBody()->getRigidBody().setLinearVelocity(btVector3{direction * 25.f});
 
-    object->SetNetworkId(linking_context->Register(object));
+    //object->SetNetworkId(linking_context->Register(object));
     //Add to snapshot
     objects.push_back(object);
 
-#endif
+//#endif
     event.setAccepted();
 }
 
 void MyApplication::pointerReleaseEvent(PointerEvent &event) {
-#ifdef IS_CLIENT
+//#ifdef IS_CLIENT
     if (_imguiContext.handlePointerReleaseEvent(event)) return;
-#endif
+//#endif
 }
 
 void MyApplication::viewportEvent(ViewportEvent &event) {
     GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
-#ifdef IS_CLIENT
+//#ifdef IS_CLIENT
     _imguiContext.relayout(Vector2{event.windowSize()} / event.dpiScaling(), event.windowSize(),
                           event.framebufferSize());
-#endif
+//#endif
 }
 
 void MyApplication::SaveWorldState(const std::vector<MBObject *> &objects, const std::string &filename) {

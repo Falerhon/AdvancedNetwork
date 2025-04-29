@@ -7,40 +7,41 @@
 #include <iostream>
 #include <string>
 
+#include "../../GameLogic/GameLogic.h"
+
 UiRenderer::UiRenderer(APIHandler* api) {
     TextOne[0] = '\0';
     TextTwo[0] = '\0';
     API = api;
 }
 
-std::optional<GameState> UiRenderer::draw(GameState& state) {
+void UiRenderer::draw(GameState state) {
 
     switch(state) {
         case GameState::Login:
-            return DrawLogin();
+            DrawLogin();
         break;
         case GameState::LoginFailed:
             //The same, but we will add something to the UI
-            return DrawLogin(true);
+            DrawLogin(true);
         break;
         case GameState::SignUp:
-            return DrawSignUp();
+            DrawSignUp();
         break;
         case GameState::MainMenu:
-            return DrawMainMenu();
+            DrawMainMenu();
         break;
         case GameState::LookingForSession:
-            return DrawLookingForSession();
+            DrawLookingForSession();
         break;
 
         case GameState::InGame:
             // Draw in-game UI if needed
                 break;
     }
-    return std::nullopt;
 }
 
-std::optional<GameState> UiRenderer::DrawLogin(bool wasError) {
+void UiRenderer::DrawLogin(bool wasError) {
     ImGuiIO& io = ImGui::GetIO(); // Get window size
     ImVec2 windowSize = ImVec2(500, 250); // Set your login window size
 
@@ -64,22 +65,24 @@ std::optional<GameState> UiRenderer::DrawLogin(bool wasError) {
 
         if (API->login(TextOne, TextTwo)) {
             ImGui::End();
-            return GameState::MainMenu;
+            GameLogic::GetInstance().SetGameState(GameState::MainMenu);
+            return;
         }
         ImGui::End();
-        return GameState::LoginFailed;
+        GameLogic::GetInstance().SetGameState(GameState::LoginFailed);
+        return;
     }
 
     if(ImGui::Button("Signin page")) {
         ImGui::End();
-        return GameState::SignUp;
+        GameLogic::GetInstance().SetGameState(GameState::SignUp);
+        return;
     }
 
-    ImGui::End();
-    return std::nullopt;
+    ImGui::End();;
 }
 
-std::optional<GameState> UiRenderer::DrawSignUp() {
+void UiRenderer::DrawSignUp() {
     ImGuiIO& io = ImGui::GetIO(); // Get window size
     ImVec2 windowSize = ImVec2(500, 250); // Set your login window size
 
@@ -108,26 +111,28 @@ std::optional<GameState> UiRenderer::DrawSignUp() {
         if (response.status_code != 201) {
             std::cout << "Sign up failed" << response.status_code << std::endl;
             ImGui::End();
-            return GameState::SignUp;
+            GameLogic::GetInstance().SetGameState(GameState::SignUp);
+            return;
         }
 
         if (API->login(TextOne, TextTwo)) {
             ImGui::End();
-            return GameState::MainMenu;
+            GameLogic::GetInstance().SetGameState(GameState::MainMenu);
+            return;
         }
 
     }
 
     if(ImGui::Button("Login page")) {
         ImGui::End();
-        return GameState::Login;
+        GameLogic::GetInstance().SetGameState(GameState::Login);
+        return;
     }
 
     ImGui::End();
-    return std::nullopt;
 }
 
-std::optional<GameState> UiRenderer::DrawMainMenu() {
+void UiRenderer::DrawMainMenu() {
     ImGuiIO& io = ImGui::GetIO(); // Get window size
     ImVec2 windowSize = ImVec2(500, 250); // Set your login window size
 
@@ -149,11 +154,13 @@ std::optional<GameState> UiRenderer::DrawMainMenu() {
         if (response.status_code != 200) {
             std::cout << "Could not start looking for session" << response.status_code << std::endl;
             ImGui::End();
-            return GameState::MainMenu;
+            GameLogic::GetInstance().SetGameState(GameState::MainMenu);
+            return;
         }
 
         ImGui::End();
-        return GameState::LookingForSession;
+        GameLogic::GetInstance().SetGameState(GameState::LookingForSession);
+        return;
     }
 
     if(ImGui::Button("Quit game")) {
@@ -162,10 +169,9 @@ std::optional<GameState> UiRenderer::DrawMainMenu() {
     }
 
     ImGui::End();
-    return std::nullopt;
 }
 
-std::optional<GameState> UiRenderer::DrawLookingForSession() {
+void UiRenderer::DrawLookingForSession() {
     ImGuiIO& io = ImGui::GetIO(); // Get window size
     ImVec2 windowSize = ImVec2(500, 250); // Set your login window size
 
@@ -182,5 +188,4 @@ std::optional<GameState> UiRenderer::DrawLookingForSession() {
     ImGui::Text("Looking for session...");
 
     ImGui::End();
-    return std::nullopt;
 }

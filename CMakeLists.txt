@@ -42,7 +42,9 @@ add_executable(MagnumBootstrap
         src/Network/LinkingContext.cpp
         src/Network/LinkingContext.h
         src/Network/NetworkObjectFactory.cpp
-        src/Network/NetworkObjectFactory.h)
+        src/Network/NetworkObjectFactory.h
+        src/GameLogic/GameLogic.cpp
+        src/GameLogic/GameLogic.h)
 
 target_include_directories(MagnumBootstrap PUBLIC inc)
 set_property(TARGET MagnumBootstrap PROPERTY CXX_STANDARD 20)
