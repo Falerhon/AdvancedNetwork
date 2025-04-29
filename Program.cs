@@ -156,7 +156,7 @@ app.MapDelete("/useritems/{id}", async (int id, UserDb db) =>
 
 app.MapControllers();
 
-//Quick setup for test logins for servers
+//Quick setup for both test logins for servers and achivements
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<UserDb>();
@@ -180,6 +180,31 @@ using (var scope = app.Services.CreateScope())
         PasswordHash = "Man",
     }
     };
+    
+    List<Achievement> testAchivements = new List<Achievement>()
+    {
+        new Achievement()
+        {
+            Name = "Champion",
+            Description = "First game won",
+            StatToTrack = "GamesWon",
+            Threshold = 1
+        },
+        new Achievement()
+        {
+            Name = "First step",
+            Description = "Play your first game",
+            StatToTrack = "GamesPlayed",
+            Threshold = 1
+        },
+        new Achievement()
+        {
+            Name = "It's raining cubes",
+            Description = "Destroy 20 cubes",
+            StatToTrack = "ObjectsDestroyed",
+            Threshold = 20
+        },
+    };
 
     // Check if any servers exist
     if (!context.GameServersAuth.Any())
@@ -189,9 +214,17 @@ using (var scope = app.Services.CreateScope())
             auth.PasswordHash = hasher.HashPassword(auth, auth.PasswordHash);
             context.GameServersAuth.Add(auth);
         }
-        
-        context.SaveChanges();
     }
+
+    if (!context.Achievements.Any())
+    {
+        foreach (var ach in testAchivements)
+        {
+            context.Achievements.Add(ach);
+        }
+    }
+    
+    context.SaveChanges();
 }
 
 app.Run();

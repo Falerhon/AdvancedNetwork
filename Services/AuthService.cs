@@ -21,14 +21,14 @@ namespace CUBEGAMEAPI.Services
             _hasher = new PasswordHasher<UserModel>();
         }
 
-        public string Authenticate(UserModel login)
+        public (string, int) Authenticate(UserModel login)
         {
             var user = _context.Users.FirstOrDefault(s => s.Username == login.Username);
-            if (user == null) return null;
+            if (user == null) return (null, -1);
 
             var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, login.PasswordHash);
             if (result == PasswordVerificationResult.Failed)
-                return null;
+                return (null, -1);
 
             var claims = new[]
             {
@@ -45,7 +45,7 @@ namespace CUBEGAMEAPI.Services
                 expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: creds);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return (new JwtSecurityTokenHandler().WriteToken(token), user.Id);
         }
     }
 }

@@ -18,11 +18,11 @@ namespace CUBEGAMEAPI.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] UserModel login)
         {
-            var token = _authService.Authenticate(login);
+            (string token,int id) = _authService.Authenticate(login);
             if (token == null)
                 return Unauthorized();
 
-            return Ok(new { token });
+            return Ok(new { token, id });
         }
     }
 }

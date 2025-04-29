@@ -21,7 +21,7 @@ namespace CUBEGAMEAPI.Controllers
             _achievementService = achievementService;
         }
 
-        // GET: api/achievements/me
+        // GET: api/achievements/MyAchivements
         [Authorize]
         [HttpGet("MyAchivements")]
         public IActionResult GetMyAchievements()
@@ -34,7 +34,7 @@ namespace CUBEGAMEAPI.Controllers
 
             var unlocked = _context.UserAchievements
                 .Where(ua => ua.UserId == id && ua.IsUnlocked)
-                .Include(ua => ua.AchievementId)
+                .Include(ua => ua.Achievement)
                 .Select(ua => new
                 {
                     ua.Achievement.Name,
@@ -42,6 +42,37 @@ namespace CUBEGAMEAPI.Controllers
                 })
                 .ToList();
 
+            return Ok(unlocked);
+        }
+        // GET: api/achievements/NewAchivements
+        [Authorize]
+        [HttpGet("NewAchivements")]
+        public IActionResult GetNewAchivement()
+        {
+            int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            
+            var unlockedIds = _context.UserAchievements
+                .Where(ua => ua.UserId == id && ua.IsUnlocked)
+                .Select(ua => ua.AchievementId)
+                .ToHashSet();
+
+            PlayerStatsModel stats = _context.Stats.FirstOrDefault(s => s.Id == id);
+            _achievementService.CheckForNewAchievements(id, stats);
+            
+            var unlockedAchievements = _context.UserAchievements.ToList();
+
+            unlockedAchievements.RemoveAll(a => unlockedIds.Contains(a.Id));
+            
+            var unlocked = _context.UserAchievements
+                .Where(ua => unlockedAchievements.Contains(ua))
+                .Include(ua => ua.Achievement)
+                .Select(ua => new
+                {
+                    ua.Achievement.Name,
+                    ua.Achievement.Description,
+                })
+                .ToList();
+            
             return Ok(unlocked);
         }
 

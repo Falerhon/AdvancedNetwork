@@ -30,21 +30,24 @@ namespace CUBEGAMEAPI.Controllers
         }
         
         [HttpPost("win")]
-        public IActionResult RecordWin() =>
-            RecordAndRespond(() => _statsService.RecordWin(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value)));
+        [Authorize(Roles = "Server")]
+        public IActionResult RecordWin([FromQuery] int id) =>
+            RecordAndRespond(id, () => _statsService.RecordWin(id));
         
         [HttpPost("loss")]
-        public IActionResult RecordLoss() =>
-            RecordAndRespond(() => _statsService.RecordLoss(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value)));
+        [Authorize(Roles = "Server")]
+        public IActionResult RecordLoss([FromQuery] int id) =>
+            RecordAndRespond(id, () => _statsService.RecordLoss(id));
 
         [HttpPost("destroy")]
-        public IActionResult RecordDestroy([FromQuery] int count = 1) =>
-            RecordAndRespond(() => _statsService.RecordObjectDestroyed(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value), count));
+        [Authorize(Roles = "Server")]
+        public IActionResult RecordDestroy([FromQuery] int id,[FromQuery] int count = 1) =>
+            RecordAndRespond(id, () => _statsService.RecordObjectDestroyed(id, count));
 
-        private IActionResult RecordAndRespond(Action updateAction)
+        private IActionResult RecordAndRespond(int id, Action updateAction)
         {
             updateAction();
-            var stats = _statsService.GetStats(int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value));
+            var stats = _statsService.GetStats(id);
             return Ok(stats);
         }
     }

@@ -4,6 +4,6 @@ namespace CUBEGAMEAPI.Services
 {
     public interface IAuthService
     {
-        string Authenticate(UserModel login);
+        (string, int) Authenticate(UserModel login);
     }
 }
