@@ -43,7 +43,7 @@ public:
     ~CubeGame();
 
     void Init();
-    void Init(ENetHost *host);
+    void Init(ENetHost *host, ENetPeer* _peer = nullptr);
     void tickEvent() override;
     void Shutdown();
 
@@ -57,6 +57,9 @@ private:
     void ReadSnapshot(const uint8_t *data, size_t offset);
 
     void SendInput(KeyEvent &event);
+    void SendInput(PointerEvent &event);
+    void ReceiveKeyboardInput(const uint8_t *data, size_t offset);
+    void ReceiveMouseInput(const uint8_t *data, size_t offset);
     void ReceivePacket(const ENetPacket* packet);
 
     void keyPressEvent(KeyEvent &event) override;
@@ -73,7 +76,7 @@ private:
     std::vector<MBObject *> networkObjects;
 
 
-#ifdef IS_CLIENT
+//#ifdef IS_CLIENT
     //********* Rendering *********//
     Shaders::PhongGL shader{NoCreate};
     ImGuiIntegration::Context _imguiContext{NoCreate};
@@ -81,10 +84,11 @@ private:
 
     //********* Matchmaking *********//
     MatchmakingManager *_matchmaking;
-#endif
+//#endif
 
     //********* Network *********//
     ENetHost *host;
+    ENetPeer *peer;
 
     //********* Bullet Physics *********//
     btDbvtBroadphase bBroadPhase; //Using a Dynamic Bounding Volume Tree to do the broad phase collision detection

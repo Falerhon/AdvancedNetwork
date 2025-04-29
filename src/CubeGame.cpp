@@ -46,7 +46,7 @@ void CubeGame::Init() {
     //********* Game Logic *********//
     linking_context = new LinkingContext();
     API = new APIHandler(OnlineServerUrl);
-#ifdef IS_CLIENT
+    //#ifdef IS_CLIENT
     _matchmaking = new MatchmakingManager(API);
     //********* Rendering *********//
     _uiRenderer = new UiRenderer(API);
@@ -74,7 +74,7 @@ void CubeGame::Init() {
     GL::Renderer::setBlendFunction(GL::Renderer::BlendFunction::SourceAlpha,
                                    GL::Renderer::BlendFunction::OneMinusSourceAlpha);
 
-#endif
+    //#endif
 
     //********* Objects *********//
     //Prep the cube and spheres
@@ -108,6 +108,13 @@ void CubeGame::Init() {
             .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.1f, 100.0f))
             .setViewport(GL::defaultFramebuffer.viewport().size());
 
+    float playersOffset = 20;
+    for (int player = 0; player < 4; player++) {
+        //Create the ground
+        MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {player * playersOffset, 0, 0}, boxInstancesDatas,
+                     drawableGroup, 0xffffff_rgbf, groundShape);
+    }
+
 #ifdef IS_SERVER
     bWorld.setGravity({.0f, -10.f, .0f});
 
@@ -117,14 +124,10 @@ void CubeGame::Init() {
 
     int nbOfBoxPerSides = 2;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
-    float playersOffset = 20;
+
 
     //For each players
     for (int player = 0; player < 4; player++) {
-        //Create the ground
-        MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {player * playersOffset, 0, 0}, boxInstancesDatas,
-                     drawableGroup, 0xffffff_rgbf, groundShape);
-
         //Create boxes with random colors
         Deg boxHue = 42.0_degf;
         for (Int i = 0; i != nbOfBoxPerSides; ++i) {
@@ -160,10 +163,13 @@ void CubeGame::Init() {
     _isRunning = true;
 }
 
-void CubeGame::Init(ENetHost *_host) {
+void CubeGame::Init(ENetHost *_host, ENetPeer *_peer) {
     Init();
 
     host = _host;
+    if (_peer) {
+        peer = _peer;
+    }
 }
 
 void CubeGame::tickEvent() {
@@ -175,7 +181,7 @@ void CubeGame::tickEvent() {
         switch (event.type) {
             case ENET_EVENT_TYPE_RECEIVE:
                 std::cout << "Received packet of size " << event.packet->dataLength << " on channel " << (int) event
-                        .channelID << " from " << event.peer->address.port << " : " << event.packet->data << std::endl;
+                        .channelID << " from " << event.peer->address.port << std::endl;
                 ReceivePacket(event.packet);
                 enet_packet_destroy(event.packet);
                 break;
@@ -186,7 +192,6 @@ void CubeGame::tickEvent() {
     }
 
 #ifdef IS_SERVER
-    std::cout << "In tick - IS_SERVER" << std::endl;
     //Remove any object far from the origin
     std::vector<int> objectsToDestroy;
     int x = 0;
@@ -206,16 +211,15 @@ void CubeGame::tickEvent() {
     //Step bullet simulation
     bWorld.stepSimulation(timeline.previousFrameDuration(), 5);
 
-    TakeSnapshot();
+    //TakeSnapshot();
 #endif
 
-#ifdef IS_CLIENT
-    std::cout << "In tick - IS_CLIENT" << std::endl;
+    //#ifdef IS_CLIENT
     if (GameLogic::GetInstance().GetGameState() == GameState::LookingForSession)
         _matchmaking->update();
 
     redraw();
-#endif
+    //#endif
 }
 
 void CubeGame::Shutdown() {
@@ -242,7 +246,7 @@ bool CubeGame::IsGameRunning() const {
 }
 
 void CubeGame::drawEvent() {
-#ifdef IS_CLIENT
+    //#ifdef IS_CLIENT
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
     //Draw the cubes and spheres
@@ -292,7 +296,7 @@ void CubeGame::drawEvent() {
 
     swapBuffers();
 
-#endif
+    //#endif
 }
 
 void CubeGame::TakeSnapshot() {
@@ -318,12 +322,10 @@ void CubeGame::TakeSnapshot() {
         obj->SerializeObject(buffer, offset);
     }
 
-    ENetPacket *packet = enet_packet_create(buffer, offset, 1);
-    if (!host)
-        std::cout << "host is null" << std::endl;
-    if (!packet)
-        std::cout << "packet is null" << std::endl;
+    //Vector3 cameraPosition = cameraObject->absoluteTransformationMatrix().translation();
 
+
+    ENetPacket *packet = enet_packet_create(buffer, offset, 1);
     enet_host_broadcast(host, 1, packet);
 #endif
 }
@@ -362,6 +364,8 @@ void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
                                                        sphereInstancesDatas, drawableGroup,
                                                        Color3::fromHsv({137.5_degf, .75f, .9f}), sphereShape);
                     break;
+                case NetworkClassID::Camera:
+
                 default:
                     break;
             }
@@ -373,7 +377,67 @@ void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
 }
 
 void CubeGame::SendInput(KeyEvent &event) {
-    std::cout << "CubeGame::SendInput" << std::endl;
+    char buffer[2048];
+    size_t offset = 0;
+
+    NetworkEventType packetType = NetworkEventType::KEYBOARD_INPUT;
+    memcpy(buffer + offset, &packetType, sizeof(NetworkEventType));
+    offset += sizeof(NetworkEventType);
+
+    Key inputKey = event.key();
+    memcpy(buffer + offset, &inputKey, sizeof(Key));
+    offset += sizeof(Key);
+
+    ENetPacket *packet = enet_packet_create(buffer, offset, 1);
+    if (peer)
+        enet_peer_send(peer, 0, packet);
+    else
+        enet_host_broadcast(host, 0, packet);
+}
+
+void CubeGame::SendInput(PointerEvent &event) {
+    char buffer[2048];
+    size_t offset = 0;
+
+    NetworkEventType packetType = NetworkEventType::MOUSE_INPUT;
+    memcpy(buffer + offset, &packetType, sizeof(NetworkEventType));
+    offset += sizeof(NetworkEventType);
+
+    Vector2 eventPos = event.position();
+    memcpy(buffer + offset, &eventPos, sizeof(Vector2));
+    offset += sizeof(Vector2);
+
+    ENetPacket *packet = enet_packet_create(buffer, offset, 1);
+    if (peer)
+        enet_peer_send(peer, 0, packet);
+    else
+        enet_host_broadcast(host, 0, packet);
+}
+
+void CubeGame::ReceiveKeyboardInput(const uint8_t *data, size_t offset) {
+    Key inputKey;
+    memcpy(&inputKey, data + offset, sizeof(Key));
+
+    if (inputKey == Key::Down || inputKey == Key::S) {
+        cameraObject->translate(Vector3({0.f, 0.f, 5.f}));
+    } else if (inputKey == Key::Up || inputKey == Key::W) {
+        cameraObject->translate(Vector3({0.f, 0.f, -5.f}));
+    } else if (inputKey == Key::Left || inputKey == Key::A) {
+        cameraObject->translate(Vector3({-5.f, 0.f, 0.f}));
+    } else if (inputKey == Key::Right || inputKey == Key::D) {
+        cameraObject->translate(Vector3({5.f, 0.f, 0.f}));
+    } else if (inputKey == Key::Q) {
+        cameraObject->translate(Vector3({0.f, 5.f, 0.f}));
+    } else if (inputKey == Key::E) {
+        cameraObject->translate(Vector3({0.f, -5.f, 0.f}));
+    }
+}
+
+void CubeGame::ReceiveMouseInput(const uint8_t *data, size_t offset) {
+    Vector2 pos;
+    memcpy(&pos, data + offset, sizeof(Vector2));
+
+    SpawnProjectile(pos);
 }
 
 void CubeGame::ReceivePacket(const ENetPacket *packet) {
@@ -381,12 +445,16 @@ void CubeGame::ReceivePacket(const ENetPacket *packet) {
     NetworkEventType packetType;
     std::memcpy(&packetType, packet->data + offset, sizeof(NetworkEventType));
     offset += sizeof(NetworkEventType);
-
+    std::cout << "Packet is of type " << static_cast<int>(packetType) << "\n";
     switch (packetType) {
         case NetworkEventType::SNAPSHOT:
             ReadSnapshot(packet->data, offset);
             break;
-        case NetworkEventType::INPUT:
+        case NetworkEventType::KEYBOARD_INPUT:
+            ReceiveKeyboardInput(packet->data, offset);
+            break;
+        case NetworkEventType::MOUSE_INPUT:
+            ReceiveMouseInput(packet->data, offset);
             break;
         case NetworkEventType::ENDGAME:
             break;
@@ -403,21 +471,8 @@ void CubeGame::keyPressEvent(KeyEvent &event) {
         return;
     }
 
-    //Movement
-    //TODO : Change this into a package send to server
-    if (event.key() == Key::Down || event.key() == Key::S) {
-        cameraObject->translate(Vector3({0.f, 0.f, 5.f}));
-    } else if (event.key() == Key::Up || event.key() == Key::W) {
-        cameraObject->translate(Vector3({0.f, 0.f, -5.f}));
-    } else if (event.key() == Key::Left || event.key() == Key::A) {
-        cameraObject->translate(Vector3({-5.f, 0.f, 0.f}));
-    } else if (event.key() == Key::Right || event.key() == Key::D) {
-        cameraObject->translate(Vector3({5.f, 0.f, 0.f}));
-    } else if (event.key() == Key::Q) {
-        cameraObject->translate(Vector3({0.f, 5.f, 0.f}));
-    } else if (event.key() == Key::E) {
-        cameraObject->translate(Vector3({0.f, -5.f, 0.f}));
-    }
+    SendInput(event);
+
 #endif
 
     event.setAccepted();
@@ -425,20 +480,32 @@ void CubeGame::keyPressEvent(KeyEvent &event) {
 
 void CubeGame::keyReleaseEvent(KeyEvent &event) {
 #ifdef IS_CLIENT
-    if (_imguiContext.handleKeyReleaseEvent(event)) return;
+    if (_imguiContext.handleKeyReleaseEvent(event)) {
+        event.setAccepted();
+        return;
+    }
 #endif
+    event.setAccepted();
 }
 
 void CubeGame::textInputEvent(TextInputEvent &event) {
 #ifdef IS_CLIENT
-    if (_imguiContext.handleTextInputEvent(event)) return;
+    if (_imguiContext.handleTextInputEvent(event)) {
+        event.setAccepted();
+        return;
+    }
 #endif
+    event.setAccepted();
 }
 
 void CubeGame::pointerMoveEvent(PointerMoveEvent &event) {
 #ifdef IS_CLIENT
-    if (_imguiContext.handlePointerMoveEvent(event)) return;
+    if (_imguiContext.handlePointerMoveEvent(event)) {
+        event.setAccepted();
+        return;
+    }
 #endif
+    event.setAccepted();
 }
 
 void CubeGame::pointerPressEvent(PointerEvent &event) {
@@ -452,19 +519,21 @@ void CubeGame::pointerPressEvent(PointerEvent &event) {
         event.setAccepted();
         return;
     }
-#endif
 
-    //Spawn the projectile
-#ifdef IS_CLIENT
-    //TODO : Package to send to server that says "spawn a projectile"
-    event.setAccepted();
+    SendInput(event);
+
 #endif
+    event.setAccepted();
 }
 
 void CubeGame::pointerReleaseEvent(PointerEvent &event) {
 #ifdef IS_CLIENT
-    if (_imguiContext.handlePointerReleaseEvent(event)) return;
+    if (_imguiContext.handlePointerReleaseEvent(event)) {
+        event.setAccepted();
+        return;
+    }
 #endif
+    event.setAccepted();
 }
 
 void CubeGame::viewportEvent(ViewportEvent &event) {

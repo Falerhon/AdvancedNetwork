@@ -3,7 +3,8 @@
 #include <cstdint>
 
 enum class NetworkEventType : uint8_t {
-    INPUT,
+    KEYBOARD_INPUT,
+    MOUSE_INPUT,
     SNAPSHOT,
     ENDGAME
 };

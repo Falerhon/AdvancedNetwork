@@ -21,7 +21,8 @@ typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 enum class NetworkClassID : uint8_t {
     INVALID = 0,
     MBCube,
-    MBSphere
+    MBSphere,
+    Camera
 };
 
 struct QuaternionFloat {
