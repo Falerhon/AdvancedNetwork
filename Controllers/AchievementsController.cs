@@ -23,7 +23,7 @@ namespace CUBEGAMEAPI.Controllers
 
         // GET: api/achievements/MyAchivements
         [Authorize]
-        [HttpGet("MyAchivements")]
+        [HttpGet("MyAchievements")]
         public IActionResult GetMyAchievements()
         {
             int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
