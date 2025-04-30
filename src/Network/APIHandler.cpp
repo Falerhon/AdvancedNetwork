@@ -26,6 +26,7 @@ bool APIHandler::login(const std::string& username, const std::string& password)
         try {
             auto json = nlohmann::json::parse(response.text);
             token = json.at("token");
+            userId = json.at("id");
             std::cout << "Login successful. Token acquired." << std::endl;
             return true;
         } catch (const std::exception& e) {

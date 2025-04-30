@@ -23,4 +23,7 @@ private:
     void DrawSignUp();
     void DrawMainMenu();
     void DrawLookingForSession();
+    void DrawNewAchivements();
+    void DrawAchivement();
+    void DrawGameOver(bool victory);
 };

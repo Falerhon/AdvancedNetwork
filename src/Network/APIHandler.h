@@ -20,6 +20,7 @@ public:
 private:
   std::string baseUrl;
   std::string token;
+  int userId;
 
   cpr::Header getAuthHeader();
 

@@ -16,28 +16,39 @@ UiRenderer::UiRenderer(APIHandler* api) {
 }
 
 void UiRenderer::draw(GameState state) {
-
-    switch(state) {
+    switch (state) {
         case GameState::Login:
             DrawLogin();
-        break;
+            break;
         case GameState::LoginFailed:
             //The same, but we will add something to the UI
             DrawLogin(true);
-        break;
+            break;
         case GameState::SignUp:
             DrawSignUp();
-        break;
+            break;
         case GameState::MainMenu:
             DrawMainMenu();
-        break;
+            break;
         case GameState::LookingForSession:
             DrawLookingForSession();
-        break;
+            break;
 
         case GameState::InGame:
             // Draw in-game UI if needed
-                break;
+            break;
+        case GameState::NewAchivement:
+            DrawNewAchivements();
+            break;
+        case GameState::Achivement:
+            DrawAchivement();
+            break;
+        case GameState::PostGameVictory:
+            DrawGameOver(true);
+            break;
+        case GameState::PostGameDefeat:
+            DrawGameOver(false);
+            break;
     }
 }
 
@@ -159,7 +170,13 @@ void UiRenderer::DrawMainMenu() {
         }
 
         ImGui::End();
-        GameLogic::GetInstance().SetGameState(GameState::LookingForSession);
+        GameLogic::GetInstance().SetGameState(GameState::InGame);
+        return;
+    }
+
+    if(ImGui::Button("Achievements")) {
+        ImGui::End();
+        GameLogic::GetInstance().SetGameState(GameState::Achivement);
         return;
     }
 
@@ -186,6 +203,135 @@ void UiRenderer::DrawLookingForSession() {
     ImGui::Begin("Matchmaking", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
     ImGui::Text("Looking for session...");
+
+    ImGui::End();
+}
+
+void UiRenderer::DrawNewAchivements() {
+    ImGuiIO& io = ImGui::GetIO(); // Get window size
+    ImVec2 windowSize = ImVec2(500, 250); // Set your login window size
+
+    ImVec2 windowPos = ImVec2(
+        (io.DisplaySize.x - windowSize.x) * 0.5f,
+        (io.DisplaySize.y - windowSize.y) * 0.5f
+    );
+
+    ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+
+    ImGui::Begin("New Achievements", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    auto achievementsList = GameLogic::GetInstance().GetNewAchievements();
+
+    if (!achievementsList.empty()) {
+        for (const auto& achievement: achievementsList) {
+            std::string text = achievement.first + "  :  " + achievement.second;
+            ImGui::Text(text.c_str());
+        }
+    } else {
+        ImGui::Text("No new achievements");
+    }
+
+    if(ImGui::Button("Main Menu")) {
+        ImGui::End();
+        GameLogic::GetInstance().SetGameState(GameState::MainMenu);
+        return;
+    }
+
+    ImGui::End();
+}
+
+void UiRenderer::DrawAchivement() {
+    ImGuiIO& io = ImGui::GetIO(); // Get window size
+    ImVec2 windowSize = ImVec2(500, 250); // Set your login window size
+
+    ImVec2 windowPos = ImVec2(
+        (io.DisplaySize.x - windowSize.x) * 0.5f,
+        (io.DisplaySize.y - windowSize.y) * 0.5f
+    );
+
+    ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+
+    ImGui::Begin("Achievements", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    auto response = API->get("/api/Achievements/MyAchievements");
+
+    if (response.status_code != 200) {
+        std::cout << "Achievement fetch failed : " << response.status_code << std::endl;
+        ImGui::End();
+        GameLogic::GetInstance().SetGameState(GameState::MainMenu);
+        return;
+    }
+
+    auto json = nlohmann::json::parse(response.text);
+    std::vector<std::pair<std::string, std::string>> achievements;
+
+    for (auto data: json) {
+        achievements.push_back({data.at("name"), data.at("description")});
+    }
+
+    if (!achievements.empty()) {
+        for (const auto& achievement: achievements) {
+            std::string text = achievement.first + "  :  " + achievement.second;
+            ImGui::Text(text.c_str());
+        }
+    } else {
+        ImGui::Text("No achievements unlocked");
+    }
+
+    if(ImGui::Button("Main Menu")) {
+        ImGui::End();
+        GameLogic::GetInstance().SetGameState(GameState::MainMenu);
+        return;
+    }
+
+    ImGui::End();
+}
+
+void UiRenderer::DrawGameOver(bool victory) {
+    ImGuiIO& io = ImGui::GetIO(); // Get window size
+    ImVec2 windowSize = ImVec2(500, 250); // Set your login window size
+
+    ImVec2 windowPos = ImVec2(
+        (io.DisplaySize.x - windowSize.x) * 0.5f,
+        (io.DisplaySize.y - windowSize.y) * 0.5f
+    );
+
+    ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(windowSize, ImGuiCond_Always);
+
+    ImGui::Begin("Game Over", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    if (victory) {
+        ImGui::Text("Victory!");
+    } else {
+        ImGui::Text("Defeat!");
+    }
+
+    if(ImGui::Button("Next")) {
+
+        auto response = API->get("/api/Achievements/NewAchievements");
+
+        if (response.status_code != 200) {
+            std::cout << "Could not get new achievements" << response.status_code << std::endl;
+            ImGui::End();
+            return;
+        }
+
+        auto json = nlohmann::json::parse(response.text);
+        std::vector<std::pair<std::string, std::string>> achievements;
+
+        for (auto data: json) {
+            achievements.push_back({data.at("name"), data.at("description")});
+        }
+
+        GameLogic::GetInstance().SetNewAchievements(achievements);
+
+        ImGui::End();
+        GameLogic::GetInstance().SetGameState(GameState::NewAchivement);
+        return;
+    }
 
     ImGui::End();
 }

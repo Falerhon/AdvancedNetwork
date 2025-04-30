@@ -10,5 +10,9 @@ enum class GameState {
     SignUp,
     MainMenu,
     LookingForSession,
-    InGame
+    InGame,
+    NewAchivement,
+    Achivement,
+    PostGameVictory,
+    PostGameDefeat
 };

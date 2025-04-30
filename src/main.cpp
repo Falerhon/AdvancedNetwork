@@ -247,7 +247,7 @@ MyApplication::MyApplication(const Arguments &arguments): Platform::Application{
     _matchmaking = new MatchmakingManager(API);
 
     //TODO : REMOVE THIS
-    GameLogic::GetInstance().SetGameState(GameState::InGame);
+    GameLogic::GetInstance().SetGameState(GameState::Login);
 
     // Loop at 60 Hz max
     setSwapInterval(1);

@@ -6,6 +6,7 @@
 #define GAMELOGIC_H
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "../GameObject/Object/GameState.h"
 
@@ -32,9 +33,13 @@ public:
     GameState GetGameState() const {return gameState;}
     void SetGameState(GameState newState){gameState = newState;}
 
+    void SetNewAchievements(const std::vector<std::pair<std::string, std::string>> &achievements){NewAchievements = achievements;}
+    std::vector<std::pair<std::string, std::string>> GetNewAchievements(){return NewAchievements;}
+
 private:
     std::vector<int> cubesLeft;
     GameState gameState;
+    std::vector<std::pair<std::string, std::string>> NewAchievements;
 };
 
 

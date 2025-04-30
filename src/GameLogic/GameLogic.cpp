@@ -25,5 +25,6 @@ void GameLogic::CubeDestroyed(int index) {
 
 void GameLogic::PlayerVictory(int index) {
     std::cout << "Player : " << index << " Won!" << std::endl;
+    SetGameState(GameState::PostGameVictory);
     //TODO : Implement player victory logic
 }
