@@ -47,6 +47,6 @@ int main() {
     char* argv[] = { arg0 };
 
     CubeGame game(Platform::GlfwApplication::Arguments{argc, argv});
-    game.Init(client, server);
+    game.Init(client);
     return game.exec();
 }
