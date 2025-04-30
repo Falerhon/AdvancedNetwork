@@ -53,10 +53,6 @@ public:
 
     virtual void DeserializeObject(const uint8_t *data, size_t &offset);
 
-    virtual void SerializeObjectToBinary(std::ofstream &outStream) const;
-
-    virtual void DeserializeObjectToBinary(std::ifstream &inStream);
-
     MBRigidBody *getMBRigidBody() const { return _rigidBody; }
     MBDrawable *getMBDrawable() const { return _drawableObject; }
 
