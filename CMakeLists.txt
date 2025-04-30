@@ -21,33 +21,7 @@ find_package(Bullet REQUIRED Dynamics)
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(MagnumBootstrap STATIC
-        #src/main.cpp
-        src/CubeGame.cpp
-        src/CubeGame.h
-        src/GameObject/Object/MBObject.cpp
-        src/GameObject/Object/MBObject.h
-        src/GameObject/RigidBody/MBRigidBody.cpp
-        src/GameObject/RigidBody/MBRigidBody.h
-        src/GameObject/Drawable/MBDrawable.cpp
-        src/GameObject/Drawable/MBDrawable.h
-        src/GameObject/Object/MBCubeObject.cpp
-        src/GameObject/Object/MBCubeObject.h
-        src/GameObject/Object/MBSphereObject.cpp
-        src/GameObject/Object/MBSphereObject.h
-        src/Network/APIHandler.cpp
-        src/Network/APIHandler.h
-        src/GameObject/Object/GameState.h
-        src/GameObject/Drawable/MBUiRenderer.cpp
-        src/GameObject/Drawable/MBUiRenderer.h
-        src/Network/MatchmakingManager.cpp
-        src/Network/MatchmakingManager.h
-        src/Network/LinkingContext.cpp
-        src/Network/LinkingContext.h
-        src/Network/NetworkObjectFactory.cpp
-        src/Network/NetworkObjectFactory.h
-        src/GameLogic/GameLogic.cpp
-        src/GameLogic/GameLogic.h
-        src/Network/NetworkEvent.h
+        src/main.cpp
 )
 
 target_include_directories(MagnumBootstrap PUBLIC inc)

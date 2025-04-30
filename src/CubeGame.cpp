@@ -14,6 +14,8 @@
 #include "Magnum/SceneGraph/Camera.h"
 #include "Magnum/Trade/MeshData.h"
 #include <algorithm>
+#include <iostream>
+
 #include "Magnum/Math/Quaternion.h"
 #include "Network/NetworkEvent.h"
 #include "Network/NetworkObjectFactory.h"
