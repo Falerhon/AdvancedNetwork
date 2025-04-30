@@ -14,6 +14,7 @@ public:
   APIHandler(const std::string& baseUrl);
 
   bool login(const std::string& username, const std::string& password);
+  bool loginServer(const std::string& username, const std::string& password);
   cpr::Response get(const std::string& endpoint);
   cpr::Response post(const std::string& endpoint, const nlohmann::json& body);
 
