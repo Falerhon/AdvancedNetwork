@@ -23,7 +23,7 @@ class LinkingContext {
     void Register(NetworkId id, MBObject* object);
     void Unregister(MBObject* object);
 
-    MBObject* GetObject(NetworkId id) const;
+    MBObject* GetObjectByNetwordId(NetworkId id) const;
     NetworkId GetNetworkId(MBObject* object) const;
 
 private:

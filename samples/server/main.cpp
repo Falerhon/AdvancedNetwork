@@ -1,6 +1,7 @@
-#include <chrono>
 #include <cstdint>
 #include <iostream>
+
+#include "CubeGame.h"
 #include "enet6/enet.h"
 
 constexpr uint16_t SERVER_PORT = 1234;
@@ -9,9 +10,6 @@ constexpr size_t MAX_CLIENTS = 4;
 int main() {
     ENetAddress address;
     ENetHost *server;
-    ENetEvent event;
-    int eventStatus;
-    char addressBuffer[ENET_ADDRESS_MAX_LENGTH];
 
 
     //Initialize Enet
@@ -41,33 +39,11 @@ int main() {
 
     std::cout << "Server started on port " << SERVER_PORT << std::endl;
 
-    while (true) {
-        if (enet_host_service(server, &event, 1000) > 0) {
-            switch (event.type) {
-                case ENET_EVENT_TYPE_CONNECT:
-                    enet_address_get_host_ip(&event.peer->address, addressBuffer, ENET_ADDRESS_MAX_LENGTH);
-                    std::cout << "Client connected from " << addressBuffer << std::endl;
-                    break;
+    int argc = 1;
+    char arg0[] = "CubeGameApp";
+    char *argv[] = {arg0};
 
-                case ENET_EVENT_TYPE_RECEIVE:
-                    std::cout << "Received packet of size " << event.packet->dataLength << " on channel " << (int) event
-                            .channelID  << " from " << event.peer->address.port << " : " << event.packet->data << std::endl;
-
-                    // Echo back the received packet
-                    enet_host_broadcast(server, 0, event.packet);
-                    break;
-
-                case ENET_EVENT_TYPE_DISCONNECT:
-                    enet_address_get_host_ip(&event.peer->address, addressBuffer, ENET_ADDRESS_MAX_LENGTH);
-                    std::cout << "Client" << addressBuffer << " disconnected." << std::endl;
-                    break;
-                case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
-                    enet_address_get_host_ip(&event.peer->address, addressBuffer, ENET_ADDRESS_MAX_LENGTH);
-                    std::cout << "Client" << addressBuffer << " timed out." << std::endl;
-                default:
-                    break;
-            }
-        }
-    }
-    return EXIT_SUCCESS;
+    CubeGame game(Platform::GlfwApplication::Arguments{argc, argv});
+    game.Init(server);
+    return game.exec();
 }

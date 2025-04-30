@@ -28,7 +28,7 @@ void LinkingContext::Unregister(MBObject* object) {
     }
 }
 
-MBObject * LinkingContext::GetObject(NetworkId id) const {
+MBObject * LinkingContext::GetObjectByNetwordId(NetworkId id) const {
     auto it = _IdToObjectMap.find(id);
     if (it != _IdToObjectMap.end())
         return it->second;
