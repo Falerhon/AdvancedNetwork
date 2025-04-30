@@ -17,6 +17,7 @@
 #include <iostream>
 #include <bits/ostream.tcc>
 
+#include "Magnum/Math/Quaternion.h"
 #include "Network/NetworkEvent.h"
 #include "Network/NetworkObjectFactory.h"
 
@@ -111,23 +112,19 @@ void CubeGame::Init() {
     float playersOffset = 20;
     for (int player = 0; player < 4; player++) {
         //Create the ground
-        MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {player * playersOffset, 0, 0}, boxInstancesDatas,
+        auto ground = MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {player * playersOffset, 0, 0}, boxInstancesDatas,
                      drawableGroup, 0xffffff_rgbf, groundShape);
     }
 
 #ifdef IS_SERVER
     bWorld.setGravity({.0f, -10.f, .0f});
 
-    //Create the ground
-    MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {0, 0, 0}, boxInstancesDatas,
-                 drawableGroup, 0xffffff_rgbf, groundShape);
-
-    int nbOfBoxPerSides = 2;
+    int nbOfBoxPerSides = 1;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
 
 
     //For each players
-    for (int player = 0; player < 4; player++) {
+    for (int player = 0; player < 1; player++) {
         //Create boxes with random colors
         Deg boxHue = 42.0_degf;
         for (Int i = 0; i != nbOfBoxPerSides; ++i) {
@@ -297,12 +294,7 @@ void CubeGame::drawEvent() {
 }
 
 void CubeGame::TakeSnapshot() {
-    std::ofstream saveFile("../SaveFile.bin");
-    for (auto object: networkObjects) {
-        object->SerializeObjectToBinary(saveFile);
-    }
 
-    saveFile.close();
 #ifdef IS_SERVER
     char buffer[2048];
     size_t offset = 0;
@@ -321,19 +313,13 @@ void CubeGame::TakeSnapshot() {
 
     //Vector3 cameraPosition = cameraObject->absoluteTransformationMatrix().translation();
 
-
     ENetPacket *packet = enet_packet_create(buffer, offset, 0);
     enet_host_broadcast(host, 1, packet);
 #endif
 }
 
 void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
-    std::ifstream saveFile("../SaveFile.bin");
-    for (auto object: networkObjects) {
-        object->DeserializeObjectToBinary(saveFile);
-    }
 
-    saveFile.close();
 #ifdef IS_CLIENT
     uint8_t numObjects;
     std::memcpy(&numObjects, data + offset, sizeof(uint8_t));
@@ -355,11 +341,13 @@ void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
                     obj = NetworkObjectFactory::Create(classId, &scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
                                                        boxInstancesDatas, drawableGroup,
                                                        Color3::fromHsv({137.5_degf, .75f, .9f}), boxShape);
+                    linking_context->Register(netID, obj);
                     break;
                 case NetworkClassID::MBSphere:
                     obj = NetworkObjectFactory::Create(classId, &scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
                                                        sphereInstancesDatas, drawableGroup,
                                                        Color3::fromHsv({137.5_degf, .75f, .9f}), sphereShape);
+                    linking_context->Register(netID, obj);
                     break;
                 case NetworkClassID::Camera:
 
@@ -556,7 +544,7 @@ void CubeGame::SpawnProjectile(Vector2 position) {
                                       {cameraObject->absoluteTransformation().translation()}, sphereInstancesDatas,
                                       drawableGroup, 0x221111_rgbf,
                                       sphereShape);
-    //has to be done explicitly (only done implicitly for kinematic objects)
+    object->getMBRigidBody()->syncPose();
 
     //Set initial velocity
     auto velocity = direction * 25.f;
