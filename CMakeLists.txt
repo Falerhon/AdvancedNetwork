@@ -20,8 +20,8 @@ find_package(Bullet REQUIRED Dynamics)
 
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
-add_executable(MagnumBootstrap
-        src/main.cpp
+add_library(MagnumBootstrap STATIC
+        #src/main.cpp
         src/CubeGame.cpp
         src/CubeGame.h
         src/GameObject/Object/MBObject.cpp
@@ -52,7 +52,7 @@ add_executable(MagnumBootstrap
 
 target_include_directories(MagnumBootstrap PUBLIC inc)
 set_property(TARGET MagnumBootstrap PROPERTY CXX_STANDARD 20)
-target_link_libraries(MagnumBootstrap PRIVATE
+target_link_libraries(MagnumBootstrap PUBLIC
         Magnum::Application
         Magnum::GL
         Magnum::Magnum
@@ -72,8 +72,8 @@ target_link_libraries(MagnumBootstrap PUBLIC EnTT::EnTT)
 
 target_link_libraries(MagnumBootstrap PUBLIC enet)
 
-target_link_libraries(MagnumBootstrap PRIVATE cpr::cpr)
-target_link_libraries(MagnumBootstrap PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(MagnumBootstrap PUBLIC cpr::cpr)
+target_link_libraries(MagnumBootstrap PUBLIC nlohmann_json::nlohmann_json)
 
 #Including windows DLL required to run the app
 if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -96,9 +96,9 @@ endif()
 
 # Link platform-specific networking libraries
 if(WIN32)
-    target_link_libraries(MagnumBootstrap PRIVATE ws2_32)
+    target_link_libraries(MagnumBootstrap PUBLIC ws2_32)
 else()
-    target_link_libraries(MagnumBootstrap PRIVATE pthread)
+    target_link_libraries(MagnumBootstrap PUBLIC pthread)
 endif()
 
 add_subdirectory(samples)
