@@ -31,7 +31,7 @@ MBObject::MBObject(Object3D *scene, btDynamicsWorld &dynamicsWorld, float mass, 
     };
 }
 
-void MBObject::SerializeObject(char* buffer, size_t& offset) const {
+void MBObject::SerializeObject(char *buffer, size_t &offset) const {
     auto write = [&](const void *data, size_t size) {
         memcpy(buffer + offset, data, size);
         offset += size;
@@ -50,6 +50,7 @@ void MBObject::SerializeObject(char* buffer, size_t& offset) const {
     int32_t pX = position.x() * PRECISIONMULTIPLIER;
     int32_t pY = position.y() * PRECISIONMULTIPLIER;
     int32_t pZ = position.z() * PRECISIONMULTIPLIER;
+    
     write(&pX, sizeof(pX));
     write(&pY, sizeof(pY));
     write(&pZ, sizeof(pZ));
@@ -119,7 +120,7 @@ void MBObject::SerializeObject(char* buffer, size_t& offset) const {
     write(&color, sizeof(color));
 }
 
-void MBObject::DeserializeObject(const uint8_t *data, size_t& offset) {
+void MBObject::DeserializeObject(const uint8_t *data, size_t &offset) {
     auto read = [&](void *dest, size_t size) {
         std::memcpy(dest, data + offset, size);
         offset += size;

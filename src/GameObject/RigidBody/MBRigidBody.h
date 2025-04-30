@@ -27,6 +27,7 @@ public:
     ~MBRigidBody() override;
 
     btRigidBody &getRigidBody() { return *bRigidBody; }
+    btRigidBody* getRigidBodyPtr() { return bRigidBody.get(); }
 
     void SetTransform(Vector3 newPosition, Quaternion newRotation, Vector3 newScale);
 
@@ -42,7 +43,6 @@ private:
     btDynamicsWorld &bWorld;
     Containers::Pointer<btRigidBody> bRigidBody;
 };
-
 
 
 #endif //RIGIDBODY_H

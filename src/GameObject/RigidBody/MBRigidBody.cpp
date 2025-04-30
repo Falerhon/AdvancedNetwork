@@ -48,7 +48,8 @@ void MBRigidBody::SetTransform(Vector3 newPosition, Quaternion newRotation, Vect
 
     btTransform t;
     t.setOrigin(btVector3(newPosition.x(), newPosition.y(), newPosition.z()));
-    t.setRotation(btQuaternion(newRotation.xyzw().x(), newRotation.xyzw().y(), newRotation.xyzw().z(), newRotation.xyzw().w()));
+    t.setRotation(btQuaternion(newRotation.xyzw().x(), newRotation.xyzw().y(), newRotation.xyzw().z(),
+                               newRotation.xyzw().w()));
 
     bRigidBody->setWorldTransform(t);
     if (bRigidBody->getMotionState()) {
@@ -57,11 +58,11 @@ void MBRigidBody::SetTransform(Vector3 newPosition, Quaternion newRotation, Vect
 
     btCollisionShape *shape = bRigidBody->getCollisionShape();
     shape->setLocalScaling(btVector3(newScale.x(), newScale.y(), newScale.z()));
+    syncPose();
 
     bRigidBody->setGravity(bWorld.getGravity());
     bWorld.addRigidBody(bRigidBody.get());
     bRigidBody->activate();
-
 }
 
 Vector3 MBRigidBody::GetPosition() {
@@ -84,5 +85,17 @@ Vector3 MBRigidBody::GetScale() {
 }
 
 void MBRigidBody::syncPose() {
-    bRigidBody->setWorldTransform(btTransform(transformationMatrix()));
+    btTransform trans;
+    bRigidBody->getMotionState()->getWorldTransform(trans);
+    btVector3 position = trans.getOrigin();
+    btQuaternion rotation = trans.getRotation();
+
+    bRigidBody->setWorldTransform(btTransform(Matrix4::from(
+        Quaternion{{rotation.getX(), rotation.getY(), rotation.getZ()}, rotation.getW()}.toMatrix(),
+        {position.getX(), position.getY(), position.getZ()})));
+
+    setTransformation(Matrix4::from(
+    Quaternion{{rotation.getX(), rotation.getY(), rotation.getZ()}, rotation.getW()}.toMatrix(),
+    {position.getX(), position.getY(), position.getZ()}
+));
 }
