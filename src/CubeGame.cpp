@@ -115,6 +115,29 @@ void CubeGame::Init() {
     }
 
 #ifdef IS_SERVER
+
+    if (API->loginServer("Zip", "Zap")) {
+        nlohmann::json payload = {
+            {"id", 0},
+            {"ip", ""},
+            {"port", 0},
+            {"maxPlayers", 4},
+            {"currentPlayers", 0},
+            {"isOnline", true},
+            {"isOccupied", false},
+            {"lastHeartbeat", "2025-04-30T20:22:02.445Z"}
+        };
+
+        auto response = API->post("/api/GameServer/register", payload);
+
+        if (response.status_code != 201 && response.status_code != 200) {
+            std::cout << "Could not register to the online server : " << response.status_code << std::endl;
+        }
+    } else {
+        std::cout << "Failed to login to the online server" << std::endl;
+    }
+
+
     bWorld.setGravity({.0f, -10.f, .0f});
 
     //Create the ground
@@ -163,9 +186,9 @@ void CubeGame::Init() {
 }
 
 void CubeGame::Init(ENetHost *_host) {
-    Init();
-
     host = _host;
+
+    Init();
 }
 
 void CubeGame::tickEvent() {
