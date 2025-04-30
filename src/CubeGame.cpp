@@ -162,13 +162,10 @@ void CubeGame::Init() {
     _isRunning = true;
 }
 
-void CubeGame::Init(ENetHost *_host, ENetPeer *_peer) {
+void CubeGame::Init(ENetHost *_host) {
     Init();
 
     host = _host;
-    if (_peer) {
-        peer = _peer;
-    }
 }
 
 void CubeGame::tickEvent() {
@@ -210,7 +207,7 @@ void CubeGame::tickEvent() {
     //Step bullet simulation
     bWorld.stepSimulation(timeline.previousFrameDuration(), 5);
 
-    //TakeSnapshot();
+    TakeSnapshot();
 #endif
 
     //#ifdef IS_CLIENT
@@ -299,12 +296,12 @@ void CubeGame::drawEvent() {
 }
 
 void CubeGame::TakeSnapshot() {
-    /*std::ofstream saveFile("../SaveFile.bin");
+    std::ofstream saveFile("../SaveFile.bin");
     for (auto object: networkObjects) {
         object->SerializeObjectToBinary(saveFile);
     }
 
-    saveFile.close();*/
+    saveFile.close();
 #ifdef IS_SERVER
     char buffer[2048];
     size_t offset = 0;
@@ -324,18 +321,18 @@ void CubeGame::TakeSnapshot() {
     //Vector3 cameraPosition = cameraObject->absoluteTransformationMatrix().translation();
 
 
-    ENetPacket *packet = enet_packet_create(buffer, offset, 1);
+    ENetPacket *packet = enet_packet_create(buffer, offset, 0);
     enet_host_broadcast(host, 1, packet);
 #endif
 }
 
 void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
-    /* std::ifstream saveFile("../SaveFile.bin");
-     for (auto object: networkObjects) {
-         object->DeserializeObjectToBinary(saveFile);
-     }
+    std::ifstream saveFile("../SaveFile.bin");
+    for (auto object: networkObjects) {
+        object->DeserializeObjectToBinary(saveFile);
+    }
 
-     saveFile.close();*/
+    saveFile.close();
 #ifdef IS_CLIENT
     uint8_t numObjects;
     std::memcpy(&numObjects, data + offset, sizeof(uint8_t));
@@ -388,10 +385,9 @@ void CubeGame::SendInput(KeyEvent &event) {
     offset += sizeof(Key);
 
     ENetPacket *packet = enet_packet_create(buffer, offset, 1);
-    if (peer)
-        enet_peer_send(peer, 0, packet);
-    else
-        enet_host_broadcast(host, 0, packet);
+
+    enet_host_broadcast(host, 0, packet);
+    enet_host_flush(host);
 }
 
 void CubeGame::SendInput(PointerEvent &event) {
@@ -406,11 +402,9 @@ void CubeGame::SendInput(PointerEvent &event) {
     memcpy(buffer + offset, &eventPos, sizeof(Vector2));
     offset += sizeof(Vector2);
 
-    ENetPacket *packet = enet_packet_create(buffer, offset, 1);
-    if (peer)
-        enet_peer_send(peer, 0, packet);
-    else
-        enet_host_broadcast(host, 0, packet);
+    ENetPacket *packet = enet_packet_create(buffer, offset, ENET_PACKET_FLAG_RELIABLE);
+    enet_host_broadcast(host, 0, packet);
+    enet_host_flush(host);
 }
 
 void CubeGame::ReceiveKeyboardInput(const uint8_t *data, size_t offset) {
@@ -509,8 +503,11 @@ void CubeGame::pointerMoveEvent(PointerMoveEvent &event) {
 
 void CubeGame::pointerPressEvent(PointerEvent &event) {
     //Shoot an object on click
-    if (!event.isPrimary() || !(event.pointer() & Pointer::MouseLeft))
+    if (!event.isPrimary() || !(event.pointer() & Pointer::MouseLeft)) {
+        event.setAccepted();
         return;
+    }
+
 
 #ifdef IS_CLIENT
     if (GameLogic::GetInstance().GetGameState() != GameState::InGame) {

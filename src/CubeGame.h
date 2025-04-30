@@ -43,7 +43,7 @@ public:
     ~CubeGame();
 
     void Init();
-    void Init(ENetHost *host, ENetPeer* _peer = nullptr);
+    void Init(ENetHost *host);
     void tickEvent() override;
     void Shutdown();
 
