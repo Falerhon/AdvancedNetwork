@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <iostream>
 
-#include "CubeGame.h"
+#include "../../src/CubeGame.h"
 #include "enet6/enet.h"
 
 constexpr uint16_t SERVER_PORT = 1234;

@@ -15,7 +15,6 @@
 #include "Magnum/Trade/MeshData.h"
 #include <algorithm>
 #include <iostream>
-#include <bits/ostream.tcc>
 
 #include "Magnum/Math/Quaternion.h"
 #include "Network/NetworkEvent.h"
