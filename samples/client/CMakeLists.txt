@@ -1,3 +1,8 @@
+cmake_minimum_required(VERSION 3.30)
+
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/modules/" ${CMAKE_MODULE_PATH})
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 add_executable(client main.cpp
         ../../src/CubeGame.cpp
         ../../src/CubeGame.h
