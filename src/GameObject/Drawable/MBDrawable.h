@@ -13,7 +13,6 @@
 #include "Magnum/Math/Color.h"
 #include "Magnum/SceneGraph/Drawable.h"
 
-class MBObject;
 using namespace Magnum;
 
 struct InstanceData {
