@@ -88,7 +88,7 @@ private:
 
     //********* Network *********//
     ENetHost *host;
-    ENetPeer *peer;
+    std::vector<NetworkId> destroyedObjects;
 
     //********* Bullet Physics *********//
     btDbvtBroadphase bBroadPhase; //Using a Dynamic Bounding Volume Tree to do the broad phase collision detection

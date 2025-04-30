@@ -14,8 +14,6 @@
 #include "Magnum/SceneGraph/Camera.h"
 #include "Magnum/Trade/MeshData.h"
 #include <algorithm>
-#include <iostream>
-
 #include "Magnum/Math/Quaternion.h"
 #include "Network/NetworkEvent.h"
 #include "Network/NetworkObjectFactory.h"
@@ -144,7 +142,6 @@ void CubeGame::Init() {
     int nbOfBoxPerSides = 1;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
 
-
     //For each players
     for (int player = 0; player < 1; player++) {
         //Create boxes with random colors
@@ -196,8 +193,6 @@ void CubeGame::tickEvent() {
     if (enet_host_service(host, &event, 0) > 0) {
         switch (event.type) {
             case ENET_EVENT_TYPE_RECEIVE:
-                std::cout << "Received packet of size " << event.packet->dataLength << " on channel " << (int) event
-                        .channelID << " from " << event.peer->address.port << std::endl;
                 ReceivePacket(event.packet);
                 enet_packet_destroy(event.packet);
                 break;
@@ -221,6 +216,7 @@ void CubeGame::tickEvent() {
     for (int i: objectsToDestroy) {
         MBObject *obj = networkObjects[i];
         networkObjects.erase(std::find(networkObjects.begin(), networkObjects.end(), obj));
+        //destroyedObjects.push_back(obj->GetNetworkId());
         delete obj;
     }
 
@@ -333,6 +329,16 @@ void CubeGame::TakeSnapshot() {
         obj->SerializeObject(buffer, offset);
     }
 
+    /*uint8_t numOjectsToDestroy = destroyedObjects.size();
+    memcpy(buffer + offset, &numOjectsToDestroy, sizeof(uint8_t));
+    offset += sizeof(uint8_t);
+
+    for (auto obj: destroyedObjects) {
+        uint32_t netId = obj->GetNetworkId();
+        memcpy(buffer + offset, &netId, sizeof(uint32_t));
+        offset += sizeof(uint32_t);
+    }*/
+
     //Vector3 cameraPosition = cameraObject->absoluteTransformationMatrix().translation();
 
     ENetPacket *packet = enet_packet_create(buffer, offset, 0);
@@ -379,7 +385,21 @@ void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
         }
 
         obj->DeserializeObject(data, offset);
-    }
+    }/*
+    uint8_t numObjectsToDestroy;
+    std::memcpy(&numObjectsToDestroy, data + offset, sizeof(uint8_t));
+    offset += sizeof(uint8_t);
+
+    for (int i = 0; i < numObjectsToDestroy; i++) {
+        NetworkId netId;
+        std::memcpy(&netId, data + offset, sizeof(NetworkId));
+        offset += sizeof(NetworkId);
+
+        MBObject* obj = linking_context->GetObjectByNetwordId(netId);
+        linking_context->Unregister(obj);
+        delete obj;
+    }*/
+
 #endif
 }
 
@@ -449,7 +469,7 @@ void CubeGame::ReceivePacket(const ENetPacket *packet) {
     NetworkEventType packetType;
     std::memcpy(&packetType, packet->data + offset, sizeof(NetworkEventType));
     offset += sizeof(NetworkEventType);
-    std::cout << "Packet is of type " << static_cast<int>(packetType) << "\n";
+
     switch (packetType) {
         case NetworkEventType::SNAPSHOT:
             ReadSnapshot(packet->data, offset);
