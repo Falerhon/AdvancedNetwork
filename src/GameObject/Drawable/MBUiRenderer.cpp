@@ -170,7 +170,7 @@ void UiRenderer::DrawMainMenu() {
         }
 
         ImGui::End();
-        GameLogic::GetInstance().SetGameState(GameState::InGame);
+        GameLogic::GetInstance().SetGameState(GameState::LookingForSession);
         return;
     }
 

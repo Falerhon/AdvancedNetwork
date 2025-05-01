@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include "enet6/enet.h"
 
 #include "../GameObject/Object/GameState.h"
 
@@ -36,10 +37,14 @@ public:
     void SetNewAchievements(const std::vector<std::pair<std::string, std::string>> &achievements){NewAchievements = achievements;}
     std::vector<std::pair<std::string, std::string>> GetNewAchievements(){return NewAchievements;}
 
+    void SetHost(ENetHost *_host){host = _host;}
+    ENetHost* GetHost(){return host;}
+
 private:
     std::vector<int> cubesLeft;
     GameState gameState;
     std::vector<std::pair<std::string, std::string>> NewAchievements;
+    ENetHost *host;
 };
 
 
