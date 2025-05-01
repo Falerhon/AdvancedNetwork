@@ -25,6 +25,14 @@ namespace CUBEGAMEAPI.Controllers
             return Ok();
         }
         
+        // POST: api/server/remove
+        [HttpPost("remove")]
+        public IActionResult Remove([FromBody] GameServer request)
+        {
+            _serverService.RemoveServer(request);
+            return Ok();
+        }
+        
         // POST: api/server/free
         [HttpPost("free")]
         public IActionResult Free([FromBody] GameServer request)

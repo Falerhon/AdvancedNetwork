@@ -34,6 +34,21 @@ namespace CUBEGAMEAPI.Services
             _context.SaveChanges();
         }
 
+        public void RemoveServer(GameServer server)
+        {
+            var existing = _context.GameServers
+                .FirstOrDefault(s => s.IP == server.IP && s.Port == server.Port);
+
+            if (existing != null)
+            {
+                _context.GameServers.Remove(existing);
+                
+                RemoveLobby(existing.Id);
+            }
+
+            _context.SaveChanges();
+        }
+
         public void MarkOfflineStaleServers(TimeSpan timeout)
         {
             var threshold = DateTime.UtcNow.Subtract(timeout);
