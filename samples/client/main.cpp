@@ -9,7 +9,6 @@ constexpr uint16_t SERVER_PORT = 1234;
 int main() {
     ENetAddress address;
     ENetHost *client;
-    ENetPeer *server;
     char addressBuffer[ENET_ADDRESS_MAX_LENGTH];
 
     if (enet_initialize() != 0) {
@@ -33,12 +32,6 @@ int main() {
                               0 /* assume any amount of outgoing bandwidth */);
     if (client == NULL) {
         fprintf(stderr, "An error occurred while trying to create an ENet client host.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    server = enet_host_connect(client, &address, 2, 0);
-    if (server == NULL) {
-        fprintf(stderr, "No server found for Enet connection on client.\n");
         exit(EXIT_FAILURE);
     }
 

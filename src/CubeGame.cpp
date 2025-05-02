@@ -14,6 +14,8 @@
 #include "Magnum/SceneGraph/Camera.h"
 #include "Magnum/Trade/MeshData.h"
 #include <algorithm>
+#include <iostream>
+
 #include "Magnum/Math/Quaternion.h"
 #include "Network/NetworkEvent.h"
 #include "Network/NetworkObjectFactory.h"
@@ -115,11 +117,13 @@ void CubeGame::Init() {
 
 #ifdef IS_SERVER
 
+    GameLogic::GetInstance().SetGameState(GameState::InGame);
+
     if (API->loginServer("Zip", "Zap")) {
         nlohmann::json payload = {
             {"id", 0},
-            {"ip", ""},
-            {"port", 0},
+            {"ip", "localhost"},
+            {"port", 1234},
             {"maxPlayers", 4},
             {"currentPlayers", 0},
             {"isOnline", true},
@@ -168,10 +172,9 @@ void CubeGame::Init() {
     }
 #endif
 
-
-    //TODO : REMOVE THIS
-    GameLogic::GetInstance().SetGameState(GameState::InGame);
-
+#ifdef IS_CLIENT
+    GameLogic::GetInstance().SetGameState(GameState::Login);
+#endif
     // Loop at 60 Hz max
     setSwapInterval(1);
     setMinimalLoopPeriod(16.0_msec);
@@ -180,8 +183,8 @@ void CubeGame::Init() {
 }
 
 void CubeGame::Init(ENetHost *_host) {
+    GameLogic::GetInstance().SetHost(_host);
     host = _host;
-
     Init();
 }
 
@@ -245,6 +248,20 @@ void CubeGame::Shutdown() {
 #ifdef IS_CLIENT
     delete _matchmaking;
     delete _uiRenderer;
+#endif
+
+#ifdef IS_SERVER
+    nlohmann::json payload = {
+        {"id", 0},
+        {"ip", "localhost"},
+        {"port", 1234},
+        {"maxPlayers", 4},
+        {"currentPlayers", 0},
+        {"isOnline", true},
+        {"isOccupied", false},
+        {"lastHeartbeat", "2025-04-30T20:22:02.445Z"}
+    };
+    API->post("/api/server/remove", payload);
 #endif
 
     for (auto obj: networkObjects) {
