@@ -11,7 +11,9 @@ Léa Bouchard
 BOUL15580206
 
 # WHERE TO FIND THE SOLUTIONS : 
-The client's target can be found in the ./samples/client 
-The server's target can be found in the ./samples/server 
+The client's target can be found in the ./samples/client
+
+The server's target can be found in the ./samples/server
+
 
 The API part of this project can be found in the CubeGameAPI branch 
