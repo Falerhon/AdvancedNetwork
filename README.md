@@ -10,5 +10,8 @@ TREA21110100
 Léa Bouchard
 BOUL15580206
 
-# WARNING
-The project is divided in parts. To find the API part, go in the CubeGameAPI branch
+# WHERE TO FIND THE SOLUTIONS : 
+The client's target can be found in the ./samples/client 
+The server's target can be found in the ./samples/server 
+
+The API part of this project can be found in the CubeGameAPI branch 
