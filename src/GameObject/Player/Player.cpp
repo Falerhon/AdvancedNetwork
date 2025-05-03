@@ -7,20 +7,17 @@ Player::Player(Object3D *scene, btDynamicsWorld &dynamicsWorld, float mass, Vect
                Containers::Array<InstanceData> &InstanceData, SceneGraph::DrawableGroup3D &DrawableGroup,
                const Color3 &Color, btCollisionShape &Shape, int id, uint8_t playerNum): MBObject(scene, dynamicsWorld,
     mass, scale, location, InstanceData, DrawableGroup, Color, Shape), _id(id), _playerNum(playerNum) {
+
+    //Camera set up
     _cameraRig = new Object3D{scene};
+    _cameraRig->translate(Vector3::yAxis(3.0f));
+    _cameraRig->translate(Vector3::xAxis(10.0f * playerNum));
+    _cameraRig->translate(Vector3::xAxis(0));
+    //.rotateY(-25.0_degf);
 
     _cameraObject = new Object3D{_cameraRig};
-    _cameraObject->translate(Vector3::zAxis(-5.f));
-    _cameraObject->translate(Vector3::xAxis(5.f));
-    _cameraObject->translate(Vector3::yAxis(1.f));
-    //_cameraObject->rotateXLocal(-25.0_degf);
-
-    /*Vector3 cameraTarget = _cameraObject->absoluteTransformation().translation() +
-                           Vector3(-_playerNum * 10.f, 0.f, 0.f);
-    Vector3 upDirection(0.0f, 1.0f, 0.0f);
-    _cameraObject->setTransformation(Matrix4::translation(_cameraObject->absoluteTransformation().translation())
-                                     * Matrix4::lookAt(_cameraObject->absoluteTransformation().translation(),
-                                                       cameraTarget, upDirection));*/
+    _cameraObject->translate(Vector3::zAxis(20.0f))
+            .rotateX(-10.0_degf);
 
     _camera = new SceneGraph::Camera3D(*_cameraObject);
     _camera->setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
@@ -76,8 +73,9 @@ void Player::DeserializeObject(const uint8_t *data, size_t &offset) {
 
 
     Vector3 cameraPosition(px / 100.0f, py / 100.0f, pz / 100.0f);
-    Vector3 cameraTarget = cameraPosition + Vector3(-_playerNum * 10.f, 0.f, 0.f);
+    Vector3 cameraTarget = cameraPosition + Vector3(_playerNum * 10.f, 0.f, 0.f);
     Vector3 upDirection(0.0f, 1.0f, 0.0f);
-    _cameraObject->setTransformation(Matrix4::translation(cameraPosition)
-                                     * Matrix4::lookAt(cameraPosition, cameraTarget, upDirection));
+    //_cameraObject->setTransformation(Matrix4::translation(cameraPosition) * Matrix4::lookAt(cameraPosition, cameraTarget, upDirection));
+    _cameraObject->setTransformation(Matrix4::translation(cameraPosition)).rotateX(-10.0_degf);
+
 }

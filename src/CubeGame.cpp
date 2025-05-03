@@ -163,6 +163,18 @@ void CubeGame::Init() {
 
 #ifdef IS_CLIENT
     GameLogic::GetInstance().SetGameState(GameState::Login);
+    /*
+    GameLogic::GetInstance().SetGameState(GameState::InGame);
+
+    Player *player = new Player(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
+                                        boxInstancesDatas,
+                                        drawableGroup, Color3::cyan(), boxShape, 0, playerNum);
+    player->SetNetworkId(linking_context->Register(player));
+    GameLogic::GetInstance().SetLocalPlayerNetID(linking_context->GetNetworkId(player));
+    playerNum++;
+    players.push_back(player);
+    networkObjects.push_back(player);
+    */
 #endif
     // Loop at 60 Hz max
     setSwapInterval(1);
@@ -405,7 +417,7 @@ void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
                 case NetworkClassID::Player: {
                     obj = NetworkObjectFactory::Create(classId, &scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
                                                        boxInstancesDatas, drawableGroup,
-                                                       Color3::fromHsv({137.5_degf, .75f, .9f}), boxShape, -1, -1);
+                                                       Color3::fromHsv({137.5_degf, .75f, .9f}), boxShape, -1, 0);
                     linking_context->Register(netID, obj);
                 }
 
@@ -490,13 +502,13 @@ void CubeGame::ReceiveKeyboardInput(const uint8_t *data, size_t offset) {
     Player *player = static_cast<Player *>(linking_context->GetObjectByNetwordId(playerID));
 
     if (player) {
-        if (inputKey == Key::Up || inputKey == Key::W) {
+        if (inputKey == Key::Down || inputKey == Key::S) {
             player->GetCameraObject()->translate(Vector3({0.f, 0.f, 5.f}));
-        } else if (inputKey == Key::Down  || inputKey == Key::S) {
+        } else if (inputKey == Key::Up  || inputKey == Key::W) {
             player->GetCameraObject()->translate(Vector3({0.f, 0.f, -5.f}));
-        } else if (inputKey == Key::Right || inputKey == Key::D) {
+        } else if (inputKey == Key::Left || inputKey == Key::A) {
             player->GetCameraObject()->translate(Vector3({-5.f, 0.f, 0.f}));
-        } else if (inputKey == Key::Left || inputKey == Key::A ) {
+        } else if (inputKey == Key::Right || inputKey == Key::D ) {
             player->GetCameraObject()->translate(Vector3({5.f, 0.f, 0.f}));
         } else if (inputKey == Key::E) {
             player->GetCameraObject()->translate(Vector3({0.f, 5.f, 0.f}));
@@ -549,7 +561,7 @@ void CubeGame::ReceivePacket(const ENetEvent event, const ENetPacket *packet) {
             int uuid;
             memcpy(&uuid, packet->data + offset, sizeof(int));
 
-            Player *player = new Player(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {playerNum * 20.f, 0, 0},
+            Player *player = new Player(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
                                         boxInstancesDatas,
                                         drawableGroup, Color3::cyan(), boxShape, uuid, playerNum);
             player->SetNetworkId(linking_context->Register(player));
@@ -595,6 +607,24 @@ void CubeGame::keyPressEvent(KeyEvent &event) {
         return;
     }
 
+    /*
+    auto inputKey = event.key();
+    Player *player = static_cast<Player *>(linking_context->GetObjectByNetwordId(GameLogic::GetInstance().GetLocalPlayerNetID()));
+
+    if (inputKey == Key::Up || inputKey == Key::S) {
+        player->GetCameraObject()->translate(Vector3({0.f, 0.f, 5.f}));
+    } else if (inputKey == Key::Down  || inputKey == Key::W) {
+        player->GetCameraObject()->translate(Vector3({0.f, 0.f, -5.f}));
+    } else if (inputKey == Key::Right || inputKey == Key::A) {
+        player->GetCameraObject()->translate(Vector3({-5.f, 0.f, 0.f}));
+    } else if (inputKey == Key::Left || inputKey == Key::D ) {
+        player->GetCameraObject()->translate(Vector3({5.f, 0.f, 0.f}));
+    } else if (inputKey == Key::E) {
+        player->GetCameraObject()->translate(Vector3({0.f, 5.f, 0.f}));
+    } else if (inputKey == Key::Q) {
+        player->GetCameraObject()->translate(Vector3({0.f, -5.f, 0.f}));
+    }
+    */
     SendInput(event);
 
 #endif
