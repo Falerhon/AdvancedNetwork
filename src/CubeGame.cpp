@@ -562,7 +562,7 @@ void CubeGame::ReceivePacket(const ENetEvent event, const ENetPacket *packet) {
             int uuid;
             memcpy(&uuid, packet->data + offset, sizeof(int));
 
-            Player *player = new Player(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 10, 0},
+            Player *player = new Player(&scene, bWorld, 0.f, {.5f, .5f, .5f}, {0, 3, 0},
                                         boxInstancesDatas,
                                         drawableGroup, Color3::cyan(), boxShape, uuid, playerNum);
             player->SetNetworkId(linking_context->Register(player));
