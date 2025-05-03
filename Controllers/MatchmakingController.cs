@@ -94,7 +94,7 @@ namespace CUBEGAMEAPI.Controllers
             if(Server == null)
                 return;
             
-            _gameServerService.MarkAsOccupied(Server, true);
+            _gameServerService.MarkAsOccupied(Server.Id, true);
             
             LobbyModel lobby = new LobbyModel();
             lobby.userIds = userIds;
