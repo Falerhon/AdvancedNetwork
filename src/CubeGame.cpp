@@ -505,11 +505,11 @@ void CubeGame::ReceiveKeyboardInput(const uint8_t *data, size_t offset) {
     if (player) {
         if (inputKey == Key::Down || inputKey == Key::S) {
             player->GetCameraObject()->translate(Vector3({0.f, 0.f, 5.f}));
-        } else if (inputKey == Key::Up  || inputKey == Key::W) {
+        } else if (inputKey == Key::Up || inputKey == Key::W) {
             player->GetCameraObject()->translate(Vector3({0.f, 0.f, -5.f}));
         } else if (inputKey == Key::Left || inputKey == Key::A) {
             player->GetCameraObject()->translate(Vector3({-5.f, 0.f, 0.f}));
-        } else if (inputKey == Key::Right || inputKey == Key::D ) {
+        } else if (inputKey == Key::Right || inputKey == Key::D) {
             player->GetCameraObject()->translate(Vector3({5.f, 0.f, 0.f}));
         } else if (inputKey == Key::E) {
             player->GetCameraObject()->translate(Vector3({0.f, 5.f, 0.f}));
@@ -712,15 +712,18 @@ auto CubeGame::SpawnProjectile(Vector2 position, NetworkId playerNetId) -> void 
         //Since the HiDPI can vary
         const Vector2 scaledPos = position * Vector2{framebufferSize()} / Vector2{windowSize()};
         const Vector2 clickPoint = Vector2::yScale(-1.f) * (scaledPos / Vector2{framebufferSize()} - Vector2{.5f}) *
-                                    player->GetCamera()->projectionSize();
-        const Vector3 direction = (player->GetCameraObject()->absoluteTransformation().rotationScaling() * Vector3(clickPoint, 1.f)).
-                normalized();
+                                   player->GetCamera()->projectionSize();
+
+        const Vector3 direction = (player->GetCameraObject()->absoluteTransformation().rotationScaling() *
+                                   Vector3(clickPoint, -1.f)).normalized();
+        const Vector3 spawnPoint = Vector3(player->GetCameraObject()->absoluteTransformation().translation().x() * 2.f,
+                                           player->GetCameraObject()->absoluteTransformation().translation().y() * 3.f,
+                                           player->GetCameraObject()->absoluteTransformation().translation().z() - 2.f);
 
         auto *object = new MBSphereObject(&scene, bWorld, 1.f, Vector3{0.5f},
-                                          {player->GetCameraObject()->absoluteTransformation().translation()}, sphereInstancesDatas,
+                                          spawnPoint, sphereInstancesDatas,
                                           drawableGroup, 0x221111_rgbf,
                                           sphereShape);
-        object->getMBRigidBody()->syncPose();
 
         //Set initial velocity
         auto velocity = direction * 25.f;
@@ -730,7 +733,6 @@ auto CubeGame::SpawnProjectile(Vector2 position, NetworkId playerNetId) -> void 
         //Add to snapshot
         networkObjects.push_back(object);
     }
-
 
 
 #endif
