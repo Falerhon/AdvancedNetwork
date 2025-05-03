@@ -47,6 +47,7 @@ void CubeGame::Init() {
     //********* Game Logic *********//
     linking_context = new LinkingContext();
     API = new APIHandler(OnlineServerUrl);
+    GameLogic::GetInstance().SetAPI(API);
 #ifdef IS_CLIENT
     _matchmaking = new MatchmakingManager(API);
     //********* Rendering *********//
@@ -157,7 +158,7 @@ void CubeGame::Init() {
                 }
             }
         }
-        GameLogic::GetInstance().AddPlayer(std::pow(nbOfBoxPerSides, 3));
+        GameLogic::GetInstance().numbOfBoxesPerPlayers = std::pow(nbOfBoxPerSides, 3);
     }
 #endif
 
@@ -561,11 +562,12 @@ void CubeGame::ReceivePacket(const ENetEvent event, const ENetPacket *packet) {
             int uuid;
             memcpy(&uuid, packet->data + offset, sizeof(int));
 
-            Player *player = new Player(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
+            Player *player = new Player(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, -1, 0},
                                         boxInstancesDatas,
                                         drawableGroup, Color3::cyan(), boxShape, uuid, playerNum);
             player->SetNetworkId(linking_context->Register(player));
-            GameLogic::GetInstance().SetLocalPlayerNetID(linking_context->GetNetworkId(player));
+
+            GameLogic::GetInstance().AddPlayer(uuid);
             playerNum++;
             players.push_back(player);
             networkObjects.push_back(player);
