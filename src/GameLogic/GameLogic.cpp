@@ -8,7 +8,7 @@
 #include <ostream>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <../src/Network/APIHandler.h>
+#include <../../src/Network/APIHandler.h>
 
 void GameLogic::AddPlayer(int UUID) {
     userIds.push_back(UUID);
@@ -70,5 +70,4 @@ void GameLogic::PlayerVictory(int index) {
 
 
     SetGameState(GameState::PostGameVictory);
-    //TODO : Implement player victory logic
 }
