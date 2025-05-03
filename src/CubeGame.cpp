@@ -97,16 +97,11 @@ void CubeGame::Init() {
 
 
     float playersOffset = 20;
-    Deg boxHue = 42.0_degf;
     for (int player = 0; player < 4; player++) {
         //Create the ground
         auto ground = MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {player * playersOffset, 0, 0},
                                    boxInstancesDatas,
-                                   drawableGroup, Color3::fromHsv({
-                                       boxHue += 137.5_degf, .75f, .9f
-                                   }), groundShape);
-        boxHue += 100.0_degf;
-        //0x1fffff_rgbf
+                                   drawableGroup, 0x1fffff_rgbf, groundShape);
     }
 
 #ifdef IS_SERVER
@@ -137,11 +132,11 @@ void CubeGame::Init() {
 
     bWorld.setGravity({.0f, -10.f, .0f});
 
-    int nbOfBoxPerSides = 1;
+    int nbOfBoxPerSides = 2;
     float centerOffset = (nbOfBoxPerSides - 1) / 2.0f;
 
     //For each players
-    for (int player = 0; player < 1; player++) {
+    for (int player = 0; player < 4; player++) {
         //Create boxes with random colors
         Deg boxHue = 42.0_degf;
         for (Int i = 0; i != nbOfBoxPerSides; ++i) {
@@ -289,7 +284,6 @@ bool CubeGame::IsGameRunning() const {
 void CubeGame::drawEvent() {
 #ifdef IS_CLIENT
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
-    GL::defaultFramebuffer.clearColor(Magnum::Color4{0.1f, 0.1f, 0.1f, 1.0f});
     //Draw the cubes and spheres
     //Repopulate the instance datas with updated transforms and colors
     arrayResize(boxInstancesDatas, 0);
@@ -454,9 +448,9 @@ void CubeGame::SendInput(KeyEvent &event) {
     memcpy(buffer + offset, &inputKey, sizeof(Key));
     offset += sizeof(Key);
 
-    uint8_t id = GameLogic::GetInstance().GetLocalPlayerID();
-    memcpy(buffer + offset, &id, sizeof(uint8_t));
-    offset += sizeof(uint8_t);
+    NetworkId id = GameLogic::GetInstance().GetLocalPlayerNetID();
+    memcpy(buffer + offset, &id, sizeof(NetworkId));
+    offset += sizeof(NetworkId);
 
     ENetPacket *packet = enet_packet_create(buffer, offset, 1);
 
@@ -476,9 +470,9 @@ void CubeGame::SendInput(PointerEvent &event) {
     memcpy(buffer + offset, &eventPos, sizeof(Vector2));
     offset += sizeof(Vector2);
 
-    uint8_t id = GameLogic::GetInstance().GetLocalPlayerID();
-    memcpy(buffer + offset, &id, sizeof(uint8_t));
-    offset += sizeof(uint8_t);
+    NetworkId id = GameLogic::GetInstance().GetLocalPlayerNetID();
+    memcpy(buffer + offset, &id, sizeof(NetworkId));
+    offset += sizeof(NetworkId);
 
     ENetPacket *packet = enet_packet_create(buffer, offset, ENET_PACKET_FLAG_RELIABLE);
     enet_host_broadcast(host, 0, packet);
@@ -489,30 +483,27 @@ void CubeGame::ReceiveKeyboardInput(const uint8_t *data, size_t offset) {
 #ifdef IS_SERVER
     Key inputKey;
     memcpy(&inputKey, data + offset, sizeof(Key));
+    offset += sizeof(Key);
 
-    uint8_t playerID;
-    memcpy(&playerID, data + offset, sizeof(uint8_t));
+    NetworkId playerID;
+    memcpy(&playerID, data + offset, sizeof(NetworkId));
+    Player *player = static_cast<Player *>(linking_context->GetObjectByNetwordId(playerID));
 
-    for (auto player: players) {
-        if (player->GetPlayerNum() == playerID) {
-            if (inputKey == Key::Down || inputKey == Key::S) {
-                player->GetCameraObject()->translate(Vector3({0.f, 0.f, 5.f}));
-            } else if (inputKey == Key::Up || inputKey == Key::W) {
-                player->GetCameraObject()->translate(Vector3({0.f, 0.f, -5.f}));
-            } else if (inputKey == Key::Left || inputKey == Key::A) {
-                player->GetCameraObject()->translate(Vector3({-5.f, 0.f, 0.f}));
-            } else if (inputKey == Key::Right || inputKey == Key::D) {
-                player->GetCameraObject()->translate(Vector3({5.f, 0.f, 0.f}));
-            } else if (inputKey == Key::Q) {
-                player->GetCameraObject()->translate(Vector3({0.f, 5.f, 0.f}));
-            } else if (inputKey == Key::E) {
-                player->GetCameraObject()->translate(Vector3({0.f, -5.f, 0.f}));
-            }
-            break;
+    if (player) {
+        if (inputKey == Key::Up || inputKey == Key::W) {
+            player->GetCameraObject()->translate(Vector3({0.f, 0.f, 5.f}));
+        } else if (inputKey == Key::Down  || inputKey == Key::S) {
+            player->GetCameraObject()->translate(Vector3({0.f, 0.f, -5.f}));
+        } else if (inputKey == Key::Right || inputKey == Key::D) {
+            player->GetCameraObject()->translate(Vector3({-5.f, 0.f, 0.f}));
+        } else if (inputKey == Key::Left || inputKey == Key::A ) {
+            player->GetCameraObject()->translate(Vector3({5.f, 0.f, 0.f}));
+        } else if (inputKey == Key::E) {
+            player->GetCameraObject()->translate(Vector3({0.f, 5.f, 0.f}));
+        } else if (inputKey == Key::Q) {
+            player->GetCameraObject()->translate(Vector3({0.f, -5.f, 0.f}));
         }
-
     }
-
 
 #endif
 }
@@ -521,11 +512,12 @@ void CubeGame::ReceiveMouseInput(const uint8_t *data, size_t offset) {
 #ifdef IS_SERVER
     Vector2 pos;
     memcpy(&pos, data + offset, sizeof(Vector2));
+    offset += sizeof(Vector2);
 
-    uint8_t playerID;
-    memcpy(&playerID, data + offset, sizeof(uint8_t));
+    NetworkId netId;
+    memcpy(&netId, data + offset, sizeof(NetworkId));
 
-    SpawnProjectile(pos, playerID);
+    SpawnProjectile(pos, netId);
 #endif
 }
 
@@ -679,44 +671,35 @@ void CubeGame::viewportEvent(ViewportEvent &event) {
 #endif
 }
 
-auto CubeGame::SpawnProjectile(Vector2 position, uint8_t playerID) -> void {
+auto CubeGame::SpawnProjectile(Vector2 position, NetworkId playerNetId) -> void {
 #ifdef IS_SERVER
-    SceneGraph::Camera3D *camera = nullptr;
-    Object3D *cameraObject = nullptr;
+    Player *player = static_cast<Player *>(linking_context->GetObjectByNetwordId(playerNetId));
 
-    for (auto player: players) {
-        if (player->GetPlayerNum() == playerID) {
-            camera = player->GetCamera();
-            cameraObject = player->GetCameraObject();
-            break;
-        }
+    if (player) {
+        //Scale the position from relative to the window size to relative to the framebuffer size
+        //Since the HiDPI can vary
+        const Vector2 scaledPos = position * Vector2{framebufferSize()} / Vector2{windowSize()};
+        const Vector2 clickPoint = Vector2::yScale(-1.f) * (scaledPos / Vector2{framebufferSize()} - Vector2{.5f}) *
+                                    player->GetCamera()->projectionSize();
+        const Vector3 direction = (player->GetCameraObject()->absoluteTransformation().rotationScaling() * Vector3(clickPoint, 1.f)).
+                normalized();
 
+        auto *object = new MBSphereObject(&scene, bWorld, 1.f, Vector3{0.5f},
+                                          {player->GetCameraObject()->absoluteTransformation().translation()}, sphereInstancesDatas,
+                                          drawableGroup, 0x221111_rgbf,
+                                          sphereShape);
+        object->getMBRigidBody()->syncPose();
+
+        //Set initial velocity
+        auto velocity = direction * 25.f;
+        object->getMBRigidBody()->getRigidBody().setLinearVelocity(btVector3(velocity.x(), velocity.y(), velocity.z()));
+
+        object->SetNetworkId(linking_context->Register(object));
+        //Add to snapshot
+        networkObjects.push_back(object);
     }
-    if (!camera || !cameraObject) {
-        return;
-    }
 
-    //Scale the position from relative to the window size to relative to the framebuffer size
-    //Since the HiDPI can vary
-    const Vector2 scaledPos = position * Vector2{framebufferSize()} / Vector2{windowSize()};
-    const Vector2 clickPoint = Vector2::yScale(-1.f) * (scaledPos / Vector2{framebufferSize()} - Vector2{.5f}) *
-                                camera->projectionSize();
-    const Vector3 direction = (cameraObject->absoluteTransformation().rotationScaling() * Vector3(clickPoint, -1.f)).
-            normalized();
 
-    auto *object = new MBSphereObject(&scene, bWorld, 1.f, Vector3{0.5f},
-                                      {cameraObject->absoluteTransformation().translation()}, sphereInstancesDatas,
-                                      drawableGroup, 0x221111_rgbf,
-                                      sphereShape);
-    object->getMBRigidBody()->syncPose();
-
-    //Set initial velocity
-    auto velocity = direction * 25.f;
-    object->getMBRigidBody()->getRigidBody().setLinearVelocity(btVector3(velocity.x(), velocity.y(), velocity.z()));
-
-    object->SetNetworkId(linking_context->Register(object));
-    //Add to snapshot
-    networkObjects.push_back(object);
 
 #endif
 }

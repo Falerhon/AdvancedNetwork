@@ -54,7 +54,7 @@ public:
 
     bool IsGameRunning() const;
 
-    void SpawnProjectile(Vector2 position, uint8_t playerId);
+    void SpawnProjectile(Vector2 position, NetworkId playerNetId);
 
 private:
     void drawEvent() override;
