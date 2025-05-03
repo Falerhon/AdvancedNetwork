@@ -11,7 +11,7 @@ Player::Player(Object3D *scene, btDynamicsWorld &dynamicsWorld, float mass, Vect
     //Camera set up
     _cameraRig = new Object3D{scene};
     _cameraRig->translate(Vector3::yAxis(3.0f));
-    _cameraRig->translate(Vector3::xAxis(10.0f * playerNum));
+    //_cameraRig->translate(Vector3::xAxis(10.0f * playerNum));
     _cameraRig->translate(Vector3::xAxis(0));
     //.rotateY(-25.0_degf);
 
