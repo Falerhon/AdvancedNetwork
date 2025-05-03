@@ -13,11 +13,14 @@
 #include "../GameObject/Object/GameState.h"
 #include "../Network/LinkingContext.h"
 
+class APIHandler;
+
 class GameLogic {
 private:
     GameLogic() {
         cubesLeft = {};
         gameState = GameState::Login;
+        userIds = {};
     };
 
 public:
@@ -31,7 +34,7 @@ public:
 
     void operator=(GameLogic const &) = delete;
 
-    void AddPlayer(int cubes);
+    void AddPlayer(int UUID);
 
     void CubeDestroyed(int index);
 
@@ -55,13 +58,19 @@ public:
     void SetHost(ENetHost *_host) { host = _host; }
     ENetHost *GetHost() { return host; }
 
+    void SetAPI(APIHandler *_api) { API = _api; }
+
+    int numbOfBoxesPerPlayers = 0;
+
 private:
     std::vector<int> cubesLeft;
+    std::vector<int> userIds;
     GameState gameState;
     std::vector<std::pair<std::string, std::string> > NewAchievements;
     ENetHost *host;
     uint8_t playerID;
     NetworkId playerNetID;
+    APIHandler *API;
 };
 
 
