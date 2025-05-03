@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <cstdint>
 
+class Player;
 class MBObject;
 
 using NetworkId = uint32_t;

@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "GameObject/Player/Player.h"
 #include "Magnum/Math/Quaternion.h"
 #include "Network/NetworkEvent.h"
 #include "Network/NetworkObjectFactory.h"
@@ -46,7 +47,7 @@ void CubeGame::Init() {
     //********* Game Logic *********//
     linking_context = new LinkingContext();
     API = new APIHandler(OnlineServerUrl);
-    //#ifdef IS_CLIENT
+#ifdef IS_CLIENT
     _matchmaking = new MatchmakingManager(API);
     //********* Rendering *********//
     _uiRenderer = new UiRenderer(API);
@@ -74,7 +75,7 @@ void CubeGame::Init() {
     GL::Renderer::setBlendFunction(GL::Renderer::BlendFunction::SourceAlpha,
                                    GL::Renderer::BlendFunction::OneMinusSourceAlpha);
 
-    //#endif
+#endif
 
     //********* Objects *********//
     //Prep the cube and spheres
@@ -94,25 +95,18 @@ void CubeGame::Init() {
                                     Shaders::PhongGL::NormalMatrix{},
                                     Shaders::PhongGL::Color3{});
 
-    //Camera set up
-    cameraRig = new Object3D{&scene};
-    cameraRig->translate(Vector3::yAxis(3.0f))
-            .rotateY(-25.0_degf);
-
-    cameraObject = new Object3D{cameraRig};
-    cameraObject->translate(Vector3::zAxis(20.0f))
-            .rotateX(-25.0_degf);
-
-    camera = new SceneGraph::Camera3D(*cameraObject);
-    camera->setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
-            .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.1f, 100.0f))
-            .setViewport(GL::defaultFramebuffer.viewport().size());
 
     float playersOffset = 20;
+    Deg boxHue = 42.0_degf;
     for (int player = 0; player < 4; player++) {
         //Create the ground
-        auto ground = MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {player * playersOffset, 0, 0}, boxInstancesDatas,
-                     drawableGroup, 0xffffff_rgbf, groundShape);
+        auto ground = MBCubeObject(&scene, bWorld, 0.f, {8.f, .5f, 8.f}, {player * playersOffset, 0, 0},
+                                   boxInstancesDatas,
+                                   drawableGroup, Color3::fromHsv({
+                                       boxHue += 137.5_degf, .75f, .9f
+                                   }), groundShape);
+        boxHue += 100.0_degf;
+        //0x1fffff_rgbf
     }
 
 #ifdef IS_SERVER
@@ -195,9 +189,28 @@ void CubeGame::tickEvent() {
     ENetEvent event;
     if (enet_host_service(host, &event, 0) > 0) {
         switch (event.type) {
+            case ENET_EVENT_TYPE_CONNECT:
+#ifdef IS_CLIENT
+            {
+                char buffer[2048];
+                size_t offset = 0;
+
+                NetworkEventType connectionType = NetworkEventType::CONNECTION;
+                memcpy(buffer + offset, &connectionType, sizeof(NetworkEventType));
+                offset += sizeof(NetworkEventType);
+
+                int uuid = API->GetUserID();
+                memcpy(buffer + offset, &uuid, sizeof(int));
+                offset += sizeof(uuid);
+
+                ENetPacket *packet = enet_packet_create(buffer, offset, 0);
+                enet_peer_send(event.peer, 0, packet);
+            }
+
+#endif
+                break;
             case ENET_EVENT_TYPE_RECEIVE:
-                ReceivePacket(event.packet);
-                enet_packet_destroy(event.packet);
+                ReceivePacket(event, event.packet);
                 break;
 
             default:
@@ -219,7 +232,9 @@ void CubeGame::tickEvent() {
     for (int i: objectsToDestroy) {
         MBObject *obj = networkObjects[i];
         networkObjects.erase(std::find(networkObjects.begin(), networkObjects.end(), obj));
-        //destroyedObjects.push_back(obj->GetNetworkId());
+        if (obj->getMBDrawable())
+            drawableGroup.remove(*obj->getMBDrawable());
+        destroyedObjects.push_back(obj->GetNetworkId());
         delete obj;
     }
 
@@ -229,21 +244,18 @@ void CubeGame::tickEvent() {
     TakeSnapshot();
 #endif
 
-    //#ifdef IS_CLIENT
+#ifdef IS_CLIENT
     if (GameLogic::GetInstance().GetGameState() == GameState::LookingForSession)
         _matchmaking->update();
 
     redraw();
-    //#endif
+#endif
 }
 
 void CubeGame::Shutdown() {
     _isRunning = false;
     delete linking_context;
     delete API;
-    delete camera;
-    delete cameraRig;
-    delete cameraObject;
 
 #ifdef IS_CLIENT
     delete _matchmaking;
@@ -275,16 +287,23 @@ bool CubeGame::IsGameRunning() const {
 }
 
 void CubeGame::drawEvent() {
-    //#ifdef IS_CLIENT
+#ifdef IS_CLIENT
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
-
+    GL::defaultFramebuffer.clearColor(Magnum::Color4{0.1f, 0.1f, 0.1f, 1.0f});
     //Draw the cubes and spheres
     //Repopulate the instance datas with updated transforms and colors
     arrayResize(boxInstancesDatas, 0);
     arrayResize(sphereInstancesDatas, 0);
-    camera->draw(drawableGroup);
 
-    shader.setProjectionMatrix(camera->projectionMatrix());
+    Player *player = static_cast<Player *>(linking_context->GetObjectByNetwordId(
+        GameLogic::GetInstance().GetLocalPlayerNetID()));
+
+    if (player) {
+        player->GetCamera()->draw(drawableGroup);
+        shader.setProjectionMatrix(player->GetCamera()->projectionMatrix());
+        shader.setTransformationMatrix(player->GetCamera()->cameraMatrix());
+    }
+
 
     //Upload the instance datas to the GPU
     //Take one draw call per object type
@@ -325,11 +344,10 @@ void CubeGame::drawEvent() {
 
     swapBuffers();
 
-    //#endif
+#endif
 }
 
 void CubeGame::TakeSnapshot() {
-
 #ifdef IS_SERVER
     char buffer[2048];
     size_t offset = 0;
@@ -346,17 +364,14 @@ void CubeGame::TakeSnapshot() {
         obj->SerializeObject(buffer, offset);
     }
 
-    /*uint8_t numOjectsToDestroy = destroyedObjects.size();
+    uint8_t numOjectsToDestroy = destroyedObjects.size();
     memcpy(buffer + offset, &numOjectsToDestroy, sizeof(uint8_t));
     offset += sizeof(uint8_t);
 
-    for (auto obj: destroyedObjects) {
-        uint32_t netId = obj->GetNetworkId();
+    for (auto netId: destroyedObjects) {
         memcpy(buffer + offset, &netId, sizeof(uint32_t));
         offset += sizeof(uint32_t);
-    }*/
-
-    //Vector3 cameraPosition = cameraObject->absoluteTransformationMatrix().translation();
+    }
 
     ENetPacket *packet = enet_packet_create(buffer, offset, 0);
     enet_host_broadcast(host, 1, packet);
@@ -364,7 +379,6 @@ void CubeGame::TakeSnapshot() {
 }
 
 void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
-
 #ifdef IS_CLIENT
     uint8_t numObjects;
     std::memcpy(&numObjects, data + offset, sizeof(uint8_t));
@@ -394,15 +408,24 @@ void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
                                                        Color3::fromHsv({137.5_degf, .75f, .9f}), sphereShape);
                     linking_context->Register(netID, obj);
                     break;
-                case NetworkClassID::Camera:
+                case NetworkClassID::Player: {
+                    obj = NetworkObjectFactory::Create(classId, &scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
+                                                       boxInstancesDatas, drawableGroup,
+                                                       Color3::fromHsv({137.5_degf, .75f, .9f}), boxShape, -1, -1);
+                    linking_context->Register(netID, obj);
+                }
 
                 default:
+                    obj = NetworkObjectFactory::Create(classId, &scene, bWorld, 1.f, {.5f, .5f, .5f}, {0, 0, 0},
+                                                       boxInstancesDatas, drawableGroup, Color3::blue(), boxShape);
+                    linking_context->Register(netID, obj);
                     break;
             }
         }
 
         obj->DeserializeObject(data, offset);
-    }/*
+    }
+
     uint8_t numObjectsToDestroy;
     std::memcpy(&numObjectsToDestroy, data + offset, sizeof(uint8_t));
     offset += sizeof(uint8_t);
@@ -412,11 +435,10 @@ void CubeGame::ReadSnapshot(const uint8_t *data, size_t offset) {
         std::memcpy(&netId, data + offset, sizeof(NetworkId));
         offset += sizeof(NetworkId);
 
-        MBObject* obj = linking_context->GetObjectByNetwordId(netId);
+        MBObject *obj = linking_context->GetObjectByNetwordId(netId);
         linking_context->Unregister(obj);
         delete obj;
-    }*/
-
+    }
 #endif
 }
 
@@ -431,6 +453,10 @@ void CubeGame::SendInput(KeyEvent &event) {
     Key inputKey = event.key();
     memcpy(buffer + offset, &inputKey, sizeof(Key));
     offset += sizeof(Key);
+
+    uint8_t id = GameLogic::GetInstance().GetLocalPlayerID();
+    memcpy(buffer + offset, &id, sizeof(uint8_t));
+    offset += sizeof(uint8_t);
 
     ENetPacket *packet = enet_packet_create(buffer, offset, 1);
 
@@ -450,38 +476,64 @@ void CubeGame::SendInput(PointerEvent &event) {
     memcpy(buffer + offset, &eventPos, sizeof(Vector2));
     offset += sizeof(Vector2);
 
+    uint8_t id = GameLogic::GetInstance().GetLocalPlayerID();
+    memcpy(buffer + offset, &id, sizeof(uint8_t));
+    offset += sizeof(uint8_t);
+
     ENetPacket *packet = enet_packet_create(buffer, offset, ENET_PACKET_FLAG_RELIABLE);
     enet_host_broadcast(host, 0, packet);
     enet_host_flush(host);
 }
 
 void CubeGame::ReceiveKeyboardInput(const uint8_t *data, size_t offset) {
+#ifdef IS_SERVER
     Key inputKey;
     memcpy(&inputKey, data + offset, sizeof(Key));
 
-    if (inputKey == Key::Down || inputKey == Key::S) {
-        cameraObject->translate(Vector3({0.f, 0.f, 5.f}));
-    } else if (inputKey == Key::Up || inputKey == Key::W) {
-        cameraObject->translate(Vector3({0.f, 0.f, -5.f}));
-    } else if (inputKey == Key::Left || inputKey == Key::A) {
-        cameraObject->translate(Vector3({-5.f, 0.f, 0.f}));
-    } else if (inputKey == Key::Right || inputKey == Key::D) {
-        cameraObject->translate(Vector3({5.f, 0.f, 0.f}));
-    } else if (inputKey == Key::Q) {
-        cameraObject->translate(Vector3({0.f, 5.f, 0.f}));
-    } else if (inputKey == Key::E) {
-        cameraObject->translate(Vector3({0.f, -5.f, 0.f}));
+    uint8_t playerID;
+    memcpy(&playerID, data + offset, sizeof(uint8_t));
+
+    for (auto player: players) {
+        if (player->GetPlayerNum() == playerID) {
+            if (inputKey == Key::Down || inputKey == Key::S) {
+                player->GetCameraObject()->translate(Vector3({0.f, 0.f, 5.f}));
+            } else if (inputKey == Key::Up || inputKey == Key::W) {
+                player->GetCameraObject()->translate(Vector3({0.f, 0.f, -5.f}));
+            } else if (inputKey == Key::Left || inputKey == Key::A) {
+                player->GetCameraObject()->translate(Vector3({-5.f, 0.f, 0.f}));
+            } else if (inputKey == Key::Right || inputKey == Key::D) {
+                player->GetCameraObject()->translate(Vector3({5.f, 0.f, 0.f}));
+            } else if (inputKey == Key::Q) {
+                player->GetCameraObject()->translate(Vector3({0.f, 5.f, 0.f}));
+            } else if (inputKey == Key::E) {
+                player->GetCameraObject()->translate(Vector3({0.f, -5.f, 0.f}));
+            }
+            break;
+        }
+
     }
+
+
+#endif
 }
 
 void CubeGame::ReceiveMouseInput(const uint8_t *data, size_t offset) {
+#ifdef IS_SERVER
     Vector2 pos;
     memcpy(&pos, data + offset, sizeof(Vector2));
 
-    SpawnProjectile(pos);
+    uint8_t playerID;
+    memcpy(&playerID, data + offset, sizeof(uint8_t));
+
+    SpawnProjectile(pos, playerID);
+#endif
 }
 
-void CubeGame::ReceivePacket(const ENetPacket *packet) {
+void CubeGame::ReceivePacket(const ENetEvent event, const ENetPacket *packet) {
+    if (packet == nullptr) {
+        return;
+    }
+
     size_t offset = 0;
     NetworkEventType packetType;
     std::memcpy(&packetType, packet->data + offset, sizeof(NetworkEventType));
@@ -499,9 +551,48 @@ void CubeGame::ReceivePacket(const ENetPacket *packet) {
             break;
         case NetworkEventType::ENDGAME:
             break;
+        case NetworkEventType::CONNECTION:
+#ifdef  IS_SERVER
+        {
+            int uuid;
+            memcpy(&uuid, packet->data + offset, sizeof(int));
+
+            Player *player = new Player(&scene, bWorld, 1.f, {.5f, .5f, .5f}, {playerNum * 20.f, 0, 0},
+                                        boxInstancesDatas,
+                                        drawableGroup, Color3::cyan(), boxShape, uuid, playerNum);
+            player->SetNetworkId(linking_context->Register(player));
+            GameLogic::GetInstance().SetLocalPlayerNetID(linking_context->GetNetworkId(player));
+            playerNum++;
+            players.push_back(player);
+            networkObjects.push_back(player);
+
+            char msg[2048];
+            size_t msgOffset = 0;
+
+            NetworkEventType packetType = NetworkEventType::CONNECTION;
+            memcpy(msg + msgOffset, &packetType, sizeof(NetworkEventType));
+            msgOffset += sizeof(NetworkEventType);
+
+            NetworkId localId = player->GetNetworkId();
+            memcpy(msg + msgOffset, &localId, sizeof(NetworkId));
+            msgOffset += sizeof(NetworkId);
+
+            ENetPacket *msg_packet = enet_packet_create(msg, msgOffset, ENET_PACKET_FLAG_RELIABLE);
+            enet_peer_send(event.peer, 0, msg_packet);
+            enet_host_flush(host);
+        }
+
+#endif
+#ifdef IS_CLIENT
+            NetworkId localId;
+            memcpy(&localId, packet->data + offset, sizeof(NetworkId));
+            GameLogic::GetInstance().SetLocalPlayerNetID(localId);
+#endif
+            break;
         default:
             break;
     }
+    enet_packet_destroy(event.packet);
 }
 
 void CubeGame::keyPressEvent(KeyEvent &event) {
@@ -588,14 +679,28 @@ void CubeGame::viewportEvent(ViewportEvent &event) {
 #endif
 }
 
-void CubeGame::SpawnProjectile(Vector2 position) {
+auto CubeGame::SpawnProjectile(Vector2 position, uint8_t playerID) -> void {
 #ifdef IS_SERVER
+    SceneGraph::Camera3D *camera = nullptr;
+    Object3D *cameraObject = nullptr;
+
+    for (auto player: players) {
+        if (player->GetPlayerNum() == playerID) {
+            camera = player->GetCamera();
+            cameraObject = player->GetCameraObject();
+            break;
+        }
+
+    }
+    if (!camera || !cameraObject) {
+        return;
+    }
+
     //Scale the position from relative to the window size to relative to the framebuffer size
     //Since the HiDPI can vary
     const Vector2 scaledPos = position * Vector2{framebufferSize()} / Vector2{windowSize()};
-    const Vector2 clickPoint = Vector2::yScale(-1.f) * (scaledPos / Vector2{framebufferSize()} - Vector2{.5f}) * camera
-                               ->
-                               projectionSize();
+    const Vector2 clickPoint = Vector2::yScale(-1.f) * (scaledPos / Vector2{framebufferSize()} - Vector2{.5f}) *
+                                camera->projectionSize();
     const Vector3 direction = (cameraObject->absoluteTransformation().rotationScaling() * Vector3(clickPoint, -1.f)).
             normalized();
 
@@ -612,5 +717,6 @@ void CubeGame::SpawnProjectile(Vector2 position) {
     object->SetNetworkId(linking_context->Register(object));
     //Add to snapshot
     networkObjects.push_back(object);
+
 #endif
 }

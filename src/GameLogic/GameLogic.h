@@ -4,16 +4,21 @@
 
 #ifndef GAMELOGIC_H
 #define GAMELOGIC_H
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <utility>
 #include "enet6/enet.h"
 
 #include "../GameObject/Object/GameState.h"
+#include "../Network/LinkingContext.h"
 
 class GameLogic {
 private:
-    GameLogic(){cubesLeft = {}; gameState = GameState::Login;};
+    GameLogic() {
+        cubesLeft = {};
+        gameState = GameState::Login;
+    };
 
 public:
     static GameLogic &GetInstance() {
@@ -23,30 +28,41 @@ public:
 
     //No copy or new instance
     GameLogic(GameLogic const &) = delete;
+
     void operator=(GameLogic const &) = delete;
 
     void AddPlayer(int cubes);
 
     void CubeDestroyed(int index);
 
+    int GetLocalPlayerID() const { return playerID; };
+    void SetLocalPlayerID(uint8_t id) { playerID = id; };
+
+    int GetLocalPlayerNetID() const { return playerNetID; }
+    void SetLocalPlayerNetID(NetworkId netId) { playerNetID = netId; };
+
     void PlayerVictory(int index);
 
-    GameState GetGameState() const {return gameState;}
-    void SetGameState(GameState newState){gameState = newState;}
+    GameState GetGameState() const { return gameState; }
+    void SetGameState(GameState newState) { gameState = newState; }
 
-    void SetNewAchievements(const std::vector<std::pair<std::string, std::string>> &achievements){NewAchievements = achievements;}
-    std::vector<std::pair<std::string, std::string>> GetNewAchievements(){return NewAchievements;}
+    void SetNewAchievements(const std::vector<std::pair<std::string, std::string> > &achievements) {
+        NewAchievements = achievements;
+    }
 
-    void SetHost(ENetHost *_host){host = _host;}
-    ENetHost* GetHost(){return host;}
+    std::vector<std::pair<std::string, std::string> > GetNewAchievements() { return NewAchievements; }
+
+    void SetHost(ENetHost *_host) { host = _host; }
+    ENetHost *GetHost() { return host; }
 
 private:
     std::vector<int> cubesLeft;
     GameState gameState;
-    std::vector<std::pair<std::string, std::string>> NewAchievements;
+    std::vector<std::pair<std::string, std::string> > NewAchievements;
     ENetHost *host;
+    uint8_t playerID;
+    NetworkId playerNetID;
 };
-
 
 
 #endif //GAMELOGIC_H

@@ -31,6 +31,7 @@ MBObject::MBObject(Object3D *scene, btDynamicsWorld &dynamicsWorld, float mass, 
     };
 }
 
+
 void MBObject::SerializeObject(char *buffer, size_t &offset) const {
     auto write = [&](const void *data, size_t size) {
         memcpy(buffer + offset, data, size);

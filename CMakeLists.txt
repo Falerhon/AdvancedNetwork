@@ -22,6 +22,8 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(MagnumBootstrap STATIC
         src/main.cpp
+        src/GameObject/Player/Player.cpp
+        src/GameObject/Player/Player.h
 )
 
 target_include_directories(MagnumBootstrap PUBLIC inc)

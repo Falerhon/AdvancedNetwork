@@ -22,7 +22,7 @@ enum class NetworkClassID : uint8_t {
     INVALID = 0,
     MBCube,
     MBSphere,
-    Camera
+    Player
 };
 
 struct QuaternionFloat {

@@ -32,6 +32,8 @@ public:
           primitiveTransformation(PrimitiveTransformation) {
     };
 
+    ~MBDrawable() = default;
+
     Color3 getColor() const { return color; }
     void SetColor(Color3 color) { this->color = color; }
 

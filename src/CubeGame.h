@@ -14,6 +14,7 @@
 #include "BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h"
 #include "enet6/enet.h"
 #include "GameObject/Drawable/MBUiRenderer.h"
+#include "GameObject/Player/Player.h"
 #include "Magnum/ImGuiIntegration/Context.hpp"
 #include "Magnum/Timeline.h"
 #include "Magnum/GL/Mesh.h"
@@ -40,34 +41,50 @@ typedef SceneGraph::Scene<SceneGraph::MatrixTransformation3D> Scene3D;
 class CubeGame : public Magnum::Platform::Application {
 public:
     explicit CubeGame(const Arguments &arguments);
+
     ~CubeGame();
 
     void Init();
+
     void Init(ENetHost *host);
+
     void tickEvent() override;
+
     void Shutdown();
 
     bool IsGameRunning() const;
 
-    void SpawnProjectile(Vector2 position);
+    void SpawnProjectile(Vector2 position, uint8_t playerId);
+
 private:
     void drawEvent() override;
 
     void TakeSnapshot();
+
     void ReadSnapshot(const uint8_t *data, size_t offset);
 
     void SendInput(KeyEvent &event);
+
     void SendInput(PointerEvent &event);
+
     void ReceiveKeyboardInput(const uint8_t *data, size_t offset);
+
     void ReceiveMouseInput(const uint8_t *data, size_t offset);
-    void ReceivePacket(const ENetPacket* packet);
+
+    void ReceivePacket(const ENetEvent event, const ENetPacket* packet);
 
     void keyPressEvent(KeyEvent &event) override;
+
     void keyReleaseEvent(KeyEvent &event) override;
+
     void textInputEvent(TextInputEvent &event) override;
+
     void pointerMoveEvent(PointerMoveEvent &event) override;
+
     void pointerPressEvent(PointerEvent &event) override;
+
     void pointerReleaseEvent(PointerEvent &event) override;
+
     void viewportEvent(ViewportEvent &event) override;
 
     bool _isRunning;
@@ -76,7 +93,7 @@ private:
     std::vector<MBObject *> networkObjects;
 
 
-//#ifdef IS_CLIENT
+    //#ifdef IS_CLIENT
     //********* Rendering *********//
     Shaders::PhongGL shader{NoCreate};
     ImGuiIntegration::Context _imguiContext{NoCreate};
@@ -84,7 +101,7 @@ private:
 
     //********* Matchmaking *********//
     MatchmakingManager *_matchmaking;
-//#endif
+    //#endif
 
     //********* Network *********//
     ENetHost *host;
@@ -112,12 +129,12 @@ private:
     Scene3D scene;
     SceneGraph::DrawableGroup3D drawableGroup;
     Timeline timeline;
-    SceneGraph::Camera3D *camera;
-    Object3D *cameraRig, *cameraObject;
+    uint8_t playerNum = 0;
 
     //********* Game Logic *********//
     APIHandler *API;
     LinkingContext *linking_context;
+    std::vector<Player*> players;
 };
 
 
