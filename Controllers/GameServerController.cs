@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using CUBEGAMEAPI.Models;
 using CUBEGAMEAPI.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -35,14 +36,15 @@ namespace CUBEGAMEAPI.Controllers
         
         // POST: api/server/free
         [HttpPost("free")]
-        public IActionResult Free([FromBody] GameServer request)
+        public IActionResult Free()
         {
-            _serverService.MarkAsOccupied(request, false);
+            int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             
-            _serverService.RemoveLobby(request.Id);
+            _serverService.MarkAsOccupied(id, false);
+            
+            _serverService.RemoveLobby(id);
             
             return Ok();
         }
-        
     }
 }

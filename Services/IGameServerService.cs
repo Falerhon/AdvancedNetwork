@@ -6,7 +6,7 @@ namespace CUBEGAMEAPI.Services
     {
         void RegisterOrUpdate(GameServer server);
         void RemoveServer(GameServer server);
-        void MarkAsOccupied(GameServer server, bool occupied);
+        void MarkAsOccupied(int id, bool occupied);
         void RemoveLobby(int serverId);
     }
 }

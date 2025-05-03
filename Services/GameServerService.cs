@@ -65,10 +65,10 @@ namespace CUBEGAMEAPI.Services
         }
 
         //Update weather or not the server is currently hosting a game
-        public void MarkAsOccupied(GameServer server, bool occupied)
+        public void MarkAsOccupied(int id, bool occupied)
         {
             var serv = _context.GameServers
-                .FirstOrDefault(s => s.IP == server.IP && s.Port == server.Port);
+                .FirstOrDefault(s => s.Id == id);
             
             if(serv == null)
                 return;
