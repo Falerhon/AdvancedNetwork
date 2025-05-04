@@ -5,6 +5,13 @@ using CUBEGAMEAPI.Services;
 
 namespace CUBEGAMEAPI.Controllers
 {
+    
+    public class PlayerCubeDestroyed
+    {
+        public int PlayerId { get; set; }
+        public int Cubes { get; set; }
+    }
+    
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
@@ -29,20 +36,31 @@ namespace CUBEGAMEAPI.Controllers
             return Ok(stats);
         }
         
+        [HttpPost("InfoSpecific")]
+        public IActionResult GetStatsSpecifix([FromBody] int playerid)
+        {
+            var stats = _statsService.GetStats(playerid);
+
+            if (stats == null)
+                return NotFound();
+
+            return Ok(stats);
+        }
+        
         [HttpPost("win")]
         [Authorize(Roles = "Server")]
-        public IActionResult RecordWin([FromQuery] int id) =>
+        public IActionResult RecordWin([FromBody] int id) =>
             RecordAndRespond(id, () => _statsService.RecordWin(id));
         
         [HttpPost("loss")]
         [Authorize(Roles = "Server")]
-        public IActionResult RecordLoss([FromQuery] int id) =>
+        public IActionResult RecordLoss([FromBody] int id) =>
             RecordAndRespond(id, () => _statsService.RecordLoss(id));
 
         [HttpPost("destroy")]
         [Authorize(Roles = "Server")]
-        public IActionResult RecordDestroy([FromQuery] int id,[FromQuery] int count = 1) =>
-            RecordAndRespond(id, () => _statsService.RecordObjectDestroyed(id, count));
+        public IActionResult RecordDestroy([FromBody] PlayerCubeDestroyed pcd) =>
+            RecordAndRespond(pcd.PlayerId, () => _statsService.RecordObjectDestroyed(pcd.PlayerId, pcd.Cubes));
 
         private IActionResult RecordAndRespond(int id, Action updateAction)
         {
