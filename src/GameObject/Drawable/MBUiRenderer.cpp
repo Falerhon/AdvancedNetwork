@@ -280,7 +280,7 @@ void UiRenderer::DrawAchivement() {
         ImGui::Text("No achievements unlocked");
     }
 
-    if(ImGui::Button("Main Menu")) {
+    if(ImGui::Button("End Game")) {
         ImGui::End();
         GameLogic::GetInstance().SetGameState(GameState::MainMenu);
         return;

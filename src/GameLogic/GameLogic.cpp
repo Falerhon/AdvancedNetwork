@@ -7,6 +7,10 @@
 #include <iostream>
 #include <ostream>
 #include <../../src/Network/APIHandler.h>
+#include "../../src/Network/NetworkEvent.h"
+
+
+enum class NetworkEventType : uint8_t;
 
 void GameLogic::AddPlayer(int UUID) {
     userIds.push_back(UUID);
@@ -66,8 +70,24 @@ void GameLogic::PlayerVictory(int index) {
         std::cout << "Could not free the server : " << responseServ.status_code << std::endl;
     }
 
+    //Send game over message
+    char buffer[2048];
+    size_t offset = 0;
+
+    NetworkEventType packetType = NetworkEventType::ENDGAME;
+    memcpy(buffer + offset, &packetType, sizeof(NetworkEventType));
+    offset += sizeof(NetworkEventType);
+
+    int winner = userIds[index];
+    memcpy(buffer + offset, &winner, sizeof(int));
+    offset += sizeof(winner);
+
+    ENetPacket *packet = enet_packet_create(buffer, offset, ENET_PACKET_FLAG_RELIABLE);
+    enet_host_broadcast(host, 0, packet);
+    enet_host_flush(host);
+
+    exit(0);
 #endif
 
-
-    SetGameState(GameState::PostGameVictory);
+    SetGameState(GameState::PostGame);
 }

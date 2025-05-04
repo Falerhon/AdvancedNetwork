@@ -14,5 +14,6 @@ enum class GameState {
     NewAchivement,
     Achivement,
     PostGameVictory,
-    PostGameDefeat
+    PostGameDefeat,
+    PostGame
 };

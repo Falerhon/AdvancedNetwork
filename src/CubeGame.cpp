@@ -555,6 +555,15 @@ void CubeGame::ReceivePacket(const ENetEvent event, const ENetPacket *packet) {
             ReceiveMouseInput(packet->data, offset);
             break;
         case NetworkEventType::ENDGAME:
+            int winner;
+            memcpy(&winner, packet->data + offset, sizeof(int));
+        if (GameLogic::GetInstance().GetLocalPlayerNetID() == winner) {
+            GameLogic::GetInstance().SetGameState(GameState::PostGameVictory);
+        } else {
+            GameLogic::GetInstance().SetGameState(GameState::PostGameDefeat);
+        }
+
+        break;
             break;
         case NetworkEventType::CONNECTION:
 #ifdef  IS_SERVER
