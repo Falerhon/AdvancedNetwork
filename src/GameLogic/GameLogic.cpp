@@ -6,8 +6,6 @@
 
 #include <iostream>
 #include <ostream>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <../../src/Network/APIHandler.h>
 
 void GameLogic::AddPlayer(int UUID) {
@@ -34,33 +32,31 @@ void GameLogic::PlayerVictory(int index) {
 
     for (int i = 0; i < userIds.size(); i++) {
 
-        nlohmann::json payload = {
-            {"id", userIds[i]},
-        };
+        int id = userIds[i];
+
+        nlohmann::json payload = id;
 
         auto response = API->post("/api/Stats/win", payload);
 
         if (response.status_code != 201 && response.status_code != 200) {
             std::cout << "Could not send data to the online server : " << response.status_code << std::endl;
-            continue;
         }
 
         nlohmann::json payloadCube = {
-            {"id", userIds[i]},
-            {"count", cubesLeft[i]},
+            {"PlayerId", id},
+            {"Cubes",  numbOfBoxesPerPlayers - cubesLeft[i]},
         };
 
         auto responseCube = API->post("/api/Stats/destroy", payloadCube);
 
         if (responseCube.status_code != 201 && responseCube.status_code != 200) {
             std::cout << "Could not send data to the online server : " << responseCube.status_code << std::endl;
-            continue;
         }
     }
 
     nlohmann::json payloadServ = {};
 
-    auto responseServ = API->post("/api/server/free", payloadServ);
+    auto responseServ = API->post("/api/GameServer/free", payloadServ);
 
     if (responseServ.status_code != 201 && responseServ.status_code != 200) {
         std::cout << "Could not free the server : " << responseServ.status_code << std::endl;

@@ -152,7 +152,7 @@ void CubeGame::Init() {
                                                           drawableGroup, Color3::fromHsv({
                                                               boxHue += 137.5_degf, .75f, .9f
                                                           }),
-                                                          boxShape);
+                                                          boxShape, player);
                     cube->SetNetworkId(linking_context->Register(cube));
                     networkObjects.emplace_back(cube);
                 }
