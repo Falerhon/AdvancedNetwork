@@ -35,8 +35,12 @@ void GameLogic::PlayerVictory(int index) {
         int id = userIds[i];
 
         nlohmann::json payload = id;
-
-        auto response = API->post("/api/Stats/win", payload);
+        cpr::Response response;
+        if (i == index) {
+            response = API->post("/api/Stats/win", payload);
+        } else {
+            response = API->post("/api/Stats/loss", payload);
+        }
 
         if (response.status_code != 201 && response.status_code != 200) {
             std::cout << "Could not send data to the online server : " << response.status_code << std::endl;
